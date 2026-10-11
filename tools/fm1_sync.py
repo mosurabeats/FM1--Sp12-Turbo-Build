@@ -121,6 +121,25 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          src="pages:https://juanjiant-bit.github.io/JIANT/webapp/installer/", site="https://juanjiant-bit.github.io/JIANT/",
          what="A bio-synthetic groovebox: six tracks drawn as living beings in thermal colours, eight engines (FM6 with "
               "Dexed, analog, phase, voice…), mutating macros, song mode from SLOOP. Not yet tested much on a real FM-1."),
+    dict(id="chord", kind="chords", name="fm1-chord", author="math0ne", repo="math0ne/fm1-chord", ident=r"FM-1_\d{3,8}",
+         src="github",
+         what="A chord machine after the HiChord, with extras: chords in a key under the white keys, slash chords and "
+              "inversions, sounds, envelopes, effects and a looper."),
+    dict(id="fumi", kind=["synth", "chords"], name="FuMi-1", author="cartesive", repo="cartesive/fumi-1",
+         ident=r"FM-1_70\d{5}", src="github",
+         what="A shigin conductor after the Suiko ST-50: its two rows of keys, the key set in honsū, equal or its own "
+              "just tuning, a koto and twelve more sounds on a 6-op FM engine, ring time, vibrato, trill and a looper."),
+    dict(id="maku", play="https://okumurari2.github.io/maku/",
+         kind=["groove", "synth"], name="MAKU", author="okumurari", repo="okumurari2/maku", ident=r"FM-1_\d{3,8}",
+         src="github", site="https://okumurari2.github.io/maku/",
+         what="An ambience machine for DJ interludes: switch it on and a random world in key plays, four parts, buttons "
+              "that are verbs, and the worlds you like breed new ones. Clock follow. Play it in the browser first."),
+    dict(id="rainbow", play="https://joshbartlettband-web.github.io/felucca-rainbow/webapp/try/",
+         kind=["chords", "groove"], name="Rainbow Mode", author="joshbartlettband-web", repo="joshbartlettband-web/felucca-rainbow",
+         ident=r"FM-1_\d{3,8}", src="pages:https://joshbartlettband-web.github.io/felucca-rainbow/webapp/installer/",
+         site="https://joshbartlettband-web.github.io/felucca-rainbow/",
+         what="A music toy for little children: 63 cartoon friends, every key in tune, chords, strumming, songs to follow "
+              "and an ear game, notes on a staff, a volume cap for small ears."),
 ]
 
 
@@ -192,8 +211,8 @@ def latest_pages(spec, repo):
         raw = r.read()
         date = parsedate_to_datetime(r.headers["Last-Modified"]).strftime("%Y-%m-%dT%H:%M:%SZ")
     version = meta["version"].lstrip("v")
-    commit = version.rsplit("-", 1)[-1]                # (v0.6.2-be3719e: the build's commit)
-    return raw, version, date, None, f"https://github.com/{repo}/tree/{commit}"
+    commit = version.rsplit("-", 1)[-1]                # (v0.6.2-be3719e: the build's commit; 1.1.5-rb: none, then main)
+    return raw, version, date, None, f"https://github.com/{repo}/tree/{commit if re.fullmatch(r'[0-9a-f]{7,40}', commit) else 'main'}"
 
 
 def latest_local(spec, sloopdx):
