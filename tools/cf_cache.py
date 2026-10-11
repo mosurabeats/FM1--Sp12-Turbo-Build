@@ -63,7 +63,8 @@ def zone_id():
 
 def rule():
     z = zone_id()
-    expr = "(http.host in {" + " ".join(f'"{h}"' for h in HOSTS) + "})"
+    # /vibe (fm1: the VIBE FM teaser, PHP with sign-ups and a password preview) is never cached: Cloudflare's default
+    expr = "(http.host in {" + " ".join(f'"{h}"' for h in HOSTS) + "} and not starts_with(http.request.uri.path, \"/vibe\"))"
     mine = {"ref": RULE_REF, "description": "zp12 + dx7: static, cached at the edge (tools/cf_cache.py)",
             "expression": expr, "action": "set_cache_settings",
             "action_parameters": {"cache": True, "edge_ttl": {"mode": "override_origin", "default": EDGE_TTL},
