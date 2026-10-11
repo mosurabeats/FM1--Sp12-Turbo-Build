@@ -396,8 +396,8 @@ function toCards(box) {
   });
 }
 
-// the order: ours first (zp12, sloopDX), then the others by their GitHub stars (each night's count)
-const OURS = ["zp12", "sloopdx"];
+// the order: zp12 first for now, then all others (sloopDX too) by their GitHub stars (each night's count)
+const OURS = ["zp12"];
 const ordered = (l) => [...OURS.map((i) => l.find((f) => f.id === i)).filter(Boolean),
                         ...l.filter((f) => !OURS.includes(f.id)).sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1))];
 function render() {
