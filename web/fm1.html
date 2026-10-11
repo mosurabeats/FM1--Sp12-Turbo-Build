@@ -57,6 +57,14 @@
   .mark { font-size: 21px; font-weight: 300; color: var(--fg); letter-spacing: -.2px; } .mark:hover { text-decoration: none; }
   .mark b { font-weight: 800; color: var(--cyan); }
   nav .home { font-size: 14px; color: var(--dim); }
+  /* VIBE FM teaser bar (fm1.designburgapps.com/vibe/, own PHP page): one line above the nav, its orange */
+  .vibe { display: block; background: #0c0a0a; border-bottom: 1px solid var(--line); color: var(--text); font-size: 14px; }
+  .vibe .wrap { display: flex; align-items: center; gap: 6px 12px; padding-top: 9px; padding-bottom: 9px; }
+  .vibe .new { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #ff6a1a; font-weight: 700; white-space: nowrap; }
+  .vibe b { color: var(--fg); font-weight: 800; white-space: nowrap; } .vibe b em { font-style: normal; color: #ff6a1a; }
+  .vibe .go { margin-left: auto; color: #ff6a1a; font-weight: 700; white-space: nowrap; }
+  .vibe:hover { text-decoration: none; background: #161212; } .vibe:hover .go { text-decoration: underline; }
+  @media (max-width: 700px) { .vibe .t { display: none; } }
   .strip { display: flex; height: 4px; } .strip i { flex: 1; }
   .strip i:nth-child(1) { background: var(--cyan); } .strip i:nth-child(2) { background: var(--blue); }
   .strip i:nth-child(3) { background: var(--pink); } .strip i:nth-child(4) { background: var(--beige); }
@@ -203,6 +211,8 @@
 </style>
 </head>
 <body>
+<a class="vibe" href="/vibe/?ref=hub"><div class="wrap"><span class="new">Coming soon</span> <b>VIBE <em>FM</em> Mk1</b>
+  <span class="t">hardware built for open firmware. Be the first to know.</span> <span class="go">Join the list &rarr;</span></div></a>
 <nav><div class="wrap"><a class="mark" href="https://fm1.designburgapps.com/">FM-1 <b>Firmware Hub</b></a>
   <a class="home" href="https://designburg.net/">designburg.net</a></div></nav>
 <div class="strip"><i></i><i></i><i></i><i></i></div>
