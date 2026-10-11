@@ -855,6 +855,11 @@ static void tap_tempo(void)                      /* ENV: the tempo of the last t
 /* button b pressed (seq: SEQ was held at the time: OCT pages the step grid's bars) */
 static void button(uint32_t b)
 {
+    if ((b == B_OCTDN || b == B_OCTUP) && (ui.held >> B_FX) & 1u) {   /* FX held: REV / ECHO THROW while held (zp12.c) */
+        ui.fx_used = 1;
+        ui_say(b == B_OCTDN ? "REV THROW" : "ECHO THROW");
+        return;
+    }
     switch (b) {
     case B_OCTUP:
         if (ui.steps) {
@@ -947,7 +952,10 @@ static void ui_leds(uint32_t *btn, uint32_t *keys, uint32_t *glow)
     if (sq.song_mode) b |= 1u << B_SAVE;
     fam = ui.page;
     b |= 1u << (fam == PG_HOME ? B_HOME : fam <= PG_SFX ? B_EDIT : fam <= PG_REV ? B_FX : fam <= PG_SONG ? B_SEQ : B_GLO);
-    b |= 1u << (ui.pair ? B_OCTUP : B_OCTDN);
+    if ((ui.held >> B_FX) & 1u)                  /* FX held: OCT- / OCT+ lit while REV / ECHO THROW */
+        b |= (uint32_t)(sp_thr_req & 1u) << B_OCTDN | (uint32_t)(sp_thr_req >> 1 & 1u) << B_OCTUP;
+    else
+        b |= 1u << (ui.pair ? B_OCTUP : B_OCTDN);
     if ((ui.held >> B_GLO) & 1u) {               /* GLO held: white keys 1-8 lit while their channel is heard (dark:
                                                   * muted, or another soloed), 9-16 lit while soloed */
         for (i = 0; i < 27u; i++) {

@@ -22,6 +22,7 @@ Sister project: sloopDX in `../sloopdx` (its installer and effects are reused he
   ~3 ms by `quiet`, not saved); `sp_trigger_at(k, vel, semis)`;
   `sp_out(v)`: the master's 16 bits (-6 dB, soft knee above 3/4). Own-sample flags: bit0 45->33, bit1 x2 (TUNE -12).
 - `sp_fx.c`: chorus / delay / reverb (sloopDX's fx_buses).
+- FX held + OCT- / OCT+: REV / ECHO THROW (`sp_thr_req` set by zp12.c, `sp_thr` glide in sp_render, sends full, echo FDBK >= 70 %; after SLOOP 2.6).
 - `sp_punch.c`: FX held + white 1-4: ROLL 1/8, ROLL 1/16, REVERSE, TAPE STOP on the whole mix (after SLOOP's punch.c),
   mono ring of 0.74 s at 22 kHz in .pool (pool is then nearly full: ~0.8 KB left); test tests/sp_punch_test.c.
 - `sp_seq.c`: 96 PPQ, 16 segments ("loops") of 1-32 bars or AUTO (bars=0: first take sets the length),

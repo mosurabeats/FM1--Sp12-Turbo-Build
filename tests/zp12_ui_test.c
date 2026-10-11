@@ -81,6 +81,22 @@ int main(int argc, char **argv)
     ui_holds(0, 0, 1u << B_REC);
     ui_holds(1u << B_EDIT, 1u << B_EDIT, 0); button(B_EDIT); button(B_OCTDN); sq_block(); ui_holds(0, 0, 1u << B_EDIT);
     if (sq_seg[0].n != 5u || ui.page != PG_HOME) { printf("zp12 ui: EDIT + OCT- did not undo FAIL\n"); return 1; }
+    {   /* FX held + OCT-: REV THROW, the bank stays; the reverb send goes full while held, and back */
+        uint32_t l, n, pr = ui.pair;
+        static int32_t o[2 * SP_BLK];
+        int64_t e = 0;
+        ui.held = 1u << B_FX; ui.fx_used = 0; button(B_OCTDN); button(B_OCTUP);
+        if (ui.pair != pr || !ui.fx_used) { printf("zp12 ui: FX + OCT changed the bank FAIL\n"); return 1; }
+        sp_thr_req = 1; ui_leds(&l, &i, &i);
+        if (!((l >> B_OCTDN) & 1u) || (l >> B_OCTUP) & 1u) { printf("zp12 ui: REV THROW not lit FAIL\n"); return 1; }
+        sp_sound[0].send[2] = 0; sp_trigger(0, 127);
+        for (n = 0; n < 12u; n++) sp_render(o);
+        for (n = 0; n < SP_BLK; n++) e += sp_bus[2][n] < 0 ? -sp_bus[2][n] : sp_bus[2][n];
+        if (sp_thr[0] != 32767 || sp_thr[1] || !e) { printf("zp12 ui: REV THROW did not open the send FAIL\n"); return 1; }
+        sp_thr_req = 0; for (n = 0; n < 12u; n++) sp_render(o);
+        if (sp_thr[0]) { printf("zp12 ui: REV THROW did not close FAIL\n"); return 1; }
+        ui.held = 0;
+    }
     fm1_ms += 2000; ui_holds(1u << B_SAVE, 1u << B_SAVE, 0); key_down(3, 0); sq_block(); ui_holds(0, 0, 1u << B_SAVE); ui_draw(); ppm("zp12-saveloop");
     if (sq_seg[1].n != 5u || ui.save_req != 1u) { printf("zp12 ui: SAVE + a black key did not save the loop FAIL\n"); return 1; }
     page(PG_SEG); ui.shift = 0; i = ui.mix[4]; button(B_SEL); knob(0, -3); fm1_ms += 20; ui_draw(); ppm("zp12-sel");

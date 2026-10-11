@@ -68,6 +68,12 @@ static uint8_t sp_mix[SP_NCH] = {100, 100, 100, 100, 100, 100, 100, 100};   /* t
 static uint8_t sp_mute, sp_solo;        /* GLO held + white key: channels muted, soloed (a solo silences the others) */
 static uint8_t sp_smooth = 1;            /* GLO > OUTPUT > SMOOTH: a jump in a channel's signal bridged in ~1 ms (no click) */
 static int32_t sp_bus[3][SP_BLK];       /* the send buses of the block: chorus, delay, reverb (mono, Q15) */
+/* REV THROW / ECHO THROW (FX held + OCT- / OCT+, after SLOOP 2.6): while held, every channel's reverb / delay send
+ * goes full, gliding in and out (~12 ms); ECHO also takes the delay's FDBK up to 70 % (sp_fx.c). Nothing is saved or
+ * recorded. sp_thr_req: bit 0 the reverb, bit 1 the echo (zp12.c); sp_thr: the glide now, Q15, a block at a time */
+static volatile uint8_t sp_thr_req;
+static int32_t sp_thr[2];               /* reverb, delay */
+static inline int32_t sp_send_thr(int32_t s, int32_t g) { return g ? s + (((127 * 258 - s) * g) >> 15) : s; }
 
 /* sample i of a packed wave, -2048..2047 */
 static inline int32_t sp_sample(const uint8_t *d, uint32_t i)
@@ -210,6 +216,7 @@ static void sp_channel(uint32_t ch, int32_t *out)
     sp_ch_t *c = &sp_ch[ch];
     uint32_t i;
     int32_t a1 = 0, k = 0, x, y, e0, e1, gl, gr, q0 = c->quiet, q1;
+    int32_t s0 = c->snd[0], s1 = sp_send_thr(c->snd[1], sp_thr[1]), s2 = sp_send_thr(c->snd[2], sp_thr[0]);
     int32_t qt = (sp_solo ? !((sp_solo >> ch) & 1u) : (sp_mute >> ch) & 1u) ? 4096 : 0;
     q1 = q0 < qt ? (q0 + 1024 < qt ? q0 + 1024 : qt) : (q0 - 1024 > qt ? q0 - 1024 : qt);   /* (~3 ms: no click) */
     c->quiet = q1;
@@ -277,11 +284,11 @@ static void sp_channel(uint32_t ch, int32_t *out)
             y = (y * (4096 - (q0 + (((q1 - q0) * (int32_t)i) >> 5)))) >> 12;
         out[2u * i] += (y * gl) >> 12;
         out[2u * i + 1u] += (y * gr) >> 12;
-        if (c->snd[0] | c->snd[1] | c->snd[2]) {      /* the sends: post fader, before pan */
+        if (s0 | s1 | s2) {                           /* the sends: post fader, before pan */
             int32_t m = (y * (gl + gr)) >> 13;
-            sp_bus[0][i] += (m * c->snd[0]) >> 15;
-            sp_bus[1][i] += (m * c->snd[1]) >> 15;
-            sp_bus[2][i] += (m * c->snd[2]) >> 15;
+            sp_bus[0][i] += (m * s0) >> 15;
+            sp_bus[1][i] += (m * s1) >> 15;
+            sp_bus[2][i] += (m * s2) >> 15;
         }
     }
     c->env = (int32_t)(((int64_t)c->env * c->emul) >> 16);
@@ -336,7 +343,10 @@ static void sp_fx_block(int32_t *out);         /* sp_fx.c */
 #endif
 static void sp_render(int32_t *out)
 {
-    uint32_t ch, i;
+    uint32_t ch, i, q = sp_thr_req;
+    for (i = 0; i < 2u; i++)                    /* the THROWs glide: ~10 blocks (12 ms) in, as many out */
+        sp_thr[i] = (q >> i) & 1u ? (sp_thr[i] + 3277 > 32767 ? 32767 : sp_thr[i] + 3277)
+                                  : (sp_thr[i] > 3277 ? sp_thr[i] - 3277 : 0);
     for (i = 0; i < SP_BLK; i++)
         sp_bus[0][i] = sp_bus[1][i] = sp_bus[2][i] = 0;
     for (ch = 0; ch < SP_NCH; ch++)

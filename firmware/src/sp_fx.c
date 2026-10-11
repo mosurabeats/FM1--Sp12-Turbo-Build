@@ -59,6 +59,8 @@ static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t
 {
     uint32_t i, k, dl = fx_delay_samples();
     int32_t fb = fxp.fdbk * 230, col = 2000 + fxp.colr * 240;
+    if (sp_thr[1] && fb < 89 * 230)              /* ECHO THROW: FDBK at least 70 %, gliding with it */
+        fb += ((89 * 230 - fb) * sp_thr[1]) >> 15;
     int32_t dmix = fxp.dmix * 258;
     int32_t g = 17000 + fxp.size * 104, lpk = 32767 - fxp.damp * 200;   /* loop gain (RT60 ~0.4..4 s), damping */
     int32_t cdepth = fxp.cdepth * 6, cmix = fxp.cmix * 258;

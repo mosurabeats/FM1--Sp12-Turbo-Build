@@ -263,12 +263,13 @@ static void zp12_main(void)
                         if (pd < 32u) er |= 1u << pd;
                     }
             sq.erase = er;
-            {   /* FX held: white keys 1-4 punch in, the last one held wins (sp_punch.c) */
+            {   /* FX held: white keys 1-4 punch in, the last one held wins (sp_punch.c); OCT- / OCT+ throw */
                 int32_t px = -1;
                 if ((bt >> B_FX) & 1u)
                     for (k = 0; k < 27u; k++)
                         if ((n >> k) & 1u && white_of(k) < PN_NFX) px = (int32_t)white_of(k);
                 pn.req = (int8_t)px;
+                sp_thr_req = (bt >> B_FX) & 1u ? (uint8_t)((bt >> B_OCTDN & 1u) | (bt >> B_OCTUP & 1u) << 1) : 0u;
             }
             for (i = 0; down; i++, down >>= 1)          /* the keys: pads (ui decides which) */
                 if (down & 1u)
