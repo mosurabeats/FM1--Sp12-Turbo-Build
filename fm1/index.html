@@ -147,7 +147,15 @@
   .tag.new { background: var(--cyan); color: #121011; white-space: nowrap; }
   .tag.upd { background: rgba(66, 245, 245, .14); color: var(--cyan); }
   .recent { border-bottom: 1px solid var(--line); background: linear-gradient(180deg, rgba(239, 232, 225, .04), transparent); font-size: 14px; }
-  .recent .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; padding-bottom: 12px; }
+  .recent .wrap { display: flex; align-items: center; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+  /* one line: the chips run as a ticker when they do not fit (doubled in JS, paused on hover) */
+  .recent .ticker { flex: 1; min-width: 0; overflow: hidden;
+                    -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 48px), transparent);
+                    mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 48px), transparent); }
+  .recent .track { display: flex; gap: 8px; width: max-content; padding: 3px 0; }
+  .recent .track.run { animation: tick var(--dur, 40s) linear infinite; }
+  .recent .ticker:hover .track, .recent .ticker:focus-within .track { animation-play-state: paused; }
+  @keyframes tick { to { transform: translateX(calc(-50% - 4px)); } }
   .recent .lbl { display: inline-flex; align-items: center; gap: 8px; margin-right: 6px; font-size: 11.5px; letter-spacing: 2px;
                  text-transform: uppercase; color: var(--beige); font-weight: 700; white-space: nowrap; }
   .recent .lbl::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: live 2.4s ease-out infinite; }
@@ -161,9 +169,10 @@
                     background: color-mix(in srgb, var(--c) 10%, transparent); }
   .recent a:hover span { color: var(--fg); }
   .recent .tag { padding: 2px 7px; font-size: 10px; }
-  @media (max-width: 600px) { .recent .wrap { gap: 6px; } .recent .lbl { flex-basis: 100%; }
-    .recent a { padding: 4px 10px 4px 8px; font-size: 13px; } .recent a span { display: none; } .recent a:nth-of-type(n+6) { display: none; } }
-  @media (prefers-reduced-motion: reduce) { .recent .lbl::before { animation: none; } .recent a { transition: none; } }
+  @media (max-width: 600px) { .recent .wrap { gap: 6px; } .recent .lbl .lt { display: none; } .recent .lbl { margin-right: 2px; }
+    .recent a { padding: 4px 10px 4px 8px; font-size: 13px; } .recent a span { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .recent .lbl::before { animation: none; } .recent a { transition: none; }
+    .recent .track.run { animation: none; } .recent .ticker { overflow-x: auto; scrollbar-width: none; } }
   .by { color: var(--dim); font-size: 14.5px; margin-top: 4px; }
   .what { color: var(--text); font-size: 15.5px; flex: 1; margin: 4px 0 0; }
   .meta { color: var(--dim); font-size: 13px; }
@@ -220,7 +229,7 @@
 <body>
 <a class="vibe" href="/vibe/?ref=hub"><div class="wrap">
   <picture><source type="image/webp" srcset="/vibe/assets/img/banner-device.webp"><img src="/vibe/assets/img/banner-device.jpg" alt="" width="84" height="30"></picture>
-  <b>VIBE <em>FM</em> Mk1</b> <span class="t">One device. <i>Endless possibilities.</i></span>
+  <b>VIBE <em>FM</em> Mk1</b> <span class="t">Open firmware, <i>officially supported.</i></span>
   <span class="offer"><strong>The first 100</strong> get 10% off</span> <span class="go">Join the list &rarr;</span>
 </div></a>
 <nav><div class="wrap"><a class="mark" href="https://fm1.designburgapps.com/">FM-1 <b>Firmware Hub</b></a>
@@ -768,11 +777,19 @@ function recent() {
   const l = all.slice(0, Math.min(8, Math.max(3, all.filter(isNew).length)));   // (all of the last 3 days: 3 to 8)
   if (!l.length) return;
   const day = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
-  $("recent").innerHTML = `<div class="wrap"><span class="lbl">Recently updated</span>${l.map((f) =>
+  $("recent").innerHTML = `<div class="wrap"><span class="lbl"><span class="lt">Recently updated</span></span><div class="ticker"><div class="track">${l.map((f) =>
     `<a href="#fw-${esc(f.id)}" data-id="${esc(f.id)}" style="--c: ${LOOK[f.id] || "#3b4bf5"}" title="${esc(f.name)} ${esc(f.version)}: to its card">` +
-    `<b>${esc(f.name)}</b> ${esc(short(f.version))} <span>· ${day(f.date)}</span>${isUpd(f) ? badge(f) : ""}</a>`).join("")}</div>`;
-  toCards($("recent"));
+    `<b>${esc(f.name)}</b> ${esc(short(f.version))} <span>· ${day(f.date)}</span>${isUpd(f) ? badge(f) : ""}</a>`).join("")}</div></div></div>`;
   $("recent").hidden = false;
+  // more chips than the line holds: a second copy behind them runs in a loop (~40 px a second)
+  const tk = $("recent").querySelector(".track"), box = tk.parentElement;
+  if (tk.scrollWidth > box.clientWidth) {
+    const w = tk.scrollWidth;
+    tk.insertAdjacentHTML("beforeend", tk.innerHTML.replaceAll("<a ", '<a tabindex="-1" aria-hidden="true" '));
+    tk.style.setProperty("--dur", Math.round(w / 40) + "s");
+    tk.classList.add("run");
+  }
+  toCards($("recent"));
 }
 
 async function midi() {
