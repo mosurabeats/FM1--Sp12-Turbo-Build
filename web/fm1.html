@@ -183,6 +183,13 @@
   .fw .links a { font-size: 13.5px; font-weight: 600; color: var(--fg); padding: 7px 12px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line); }
   .fw .links a:hover { text-decoration: none; box-shadow: inset 0 0 0 1px var(--c); }
   .fw .msg { font-size: 14px; color: var(--dim); min-height: 1.2em; }
+  /* after a successful install: the moment to mention VIBE FM (fm1.designburgapps.com/vibe/, ref hub-install) */
+  .fw .vibe-after { display: flex; gap: 12px; align-items: center; margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+                    background: #0c0a0a; box-shadow: inset 0 0 0 1px rgba(255, 106, 26, .45); color: var(--text); font-size: 13.5px; line-height: 1.4; }
+  .fw .vibe-after img { width: 64px; height: 40px; object-fit: cover; object-position: 75% 50%; border-radius: 6px; flex: none; }
+  .fw .vibe-after b { color: var(--fg); } .fw .vibe-after em { font-style: normal; color: #ff6a1a; font-weight: 800; }
+  .fw .vibe-after .go { color: #ff6a1a; font-weight: 800; white-space: nowrap; }
+  .fw .vibe-after:hover { text-decoration: none; box-shadow: inset 0 0 0 1px #ff6a1a; } .fw .vibe-after:hover .go { text-decoration: underline; }
   .fw > h3 { font-size: 28px; margin: 0; font-weight: 800; color: var(--c); }
   .fw .what code { color: var(--cyan); } .fw .what a { color: var(--fg); text-decoration: underline; text-decoration-color: var(--line); }
   .fw .slot { width: calc(var(--h) * .82); height: calc(var(--h) * .82); border: 2px dashed var(--line); border-radius: 10px; display: grid;
@@ -541,6 +548,17 @@ async function probe(what) {
   } catch (e) { ev("No device", `${what}: ${e.code || e.message}`); return e; }
 }
 
+// after an install that worked: a word about VIBE FM Mk1 under the card's message (once per card)
+function vibeAfter(el) {
+  if (!el || el.querySelector(".vibe-after")) return;
+  el.querySelector(".msg").insertAdjacentHTML("afterend",
+    `<a class="vibe-after" href="/vibe/?ref=hub-install"><picture><source type="image/webp" srcset="/vibe/assets/img/banner-device.webp">` +
+    `<img src="/vibe/assets/img/banner-device.jpg" alt="" width="64" height="40"></picture>` +
+    `<span><b>Like this?</b> VIBE <em>FM</em> Mk1 is hardware that officially supports open firmware. ` +
+    `<b>The first 100 get 10% off.</b> <span class="go">Join the list &rarr;</span></span></a>`);
+  el.querySelector(".vibe-after").onclick = () => ev("VIBE", "after install");
+}
+
 const TOTAL = 74 + 1179;                        // the reads of a package: step 1, step 2 (as the installers count them)
 async function install(f, el) {
   if (writing) return;
@@ -575,6 +593,7 @@ async function install(f, el) {
     if (ota) { ota.link.close(); if (!(await up.resume(image, step))) throw new Error("stopped"); }
     else await up.install(image, f.product, step);
     msg(`${f.name} ${f.version} is on your FM-1.`, "ok");
+    vibeAfter(el);
     ev("Install OK", `${f.name} ${f.version}`);
     current = f.product; showNow();
   } catch (e) {
@@ -636,6 +655,7 @@ fetch("catalog.json?" + new Date().toISOString().slice(0, 10), { cache: "no-stor
     current = f.product; showNow();
     const m = $("grid").querySelector(`.fw[data-id="${f.id}"]`).querySelector(".msg");
     m.textContent = `${f.name} ${f.version} is on your FM-1.`; m.style.color = "var(--ok)";
+    vibeAfter($("grid").querySelector(`.fw[data-id="${f.id}"]`));
   }
 }).catch((e) => { $("grid").innerHTML = `<p class="meta">The catalogue could not be loaded: ${esc(e.message)}</p>`; });
 </script>
