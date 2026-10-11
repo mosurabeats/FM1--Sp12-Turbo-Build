@@ -7,7 +7,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Firmware Hub – open-source firmwares for small music machines</title>
-<meta name="description" content="Make Firmware, Not War: open-source custom firmwares for small music machines, collected per device and installed from the browser in one click. Starting with the M-VAVE FM-1.">
+<meta name="description" content="Make Firmware, Not War: open-source custom firmwares for small music machines, collected per device and installed from the browser in one click. For the M-VAVE FM-1 and the SMK-37 Pro.">
 <meta name="author" content="zvenson">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://thefirmwarehub.com/">
@@ -15,7 +15,7 @@
 <meta property="og:site_name" content="The Firmware Hub">
 <meta property="og:url" content="https://thefirmwarehub.com/">
 <meta property="og:title" content="The Firmware Hub – Make Firmware, Not War">
-<meta property="og:description" content="Open-source firmwares for small music machines, per device, one click each. Starting with the M-VAVE FM-1.">
+<meta property="og:description" content="Open-source firmwares for small music machines, per device, one click each. For the M-VAVE FM-1 and the SMK-37 Pro.">
 <meta property="og:image" content="https://fm1.designburgapps.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://fm1.designburgapps.com/og.png">
@@ -62,6 +62,8 @@
   .shots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .shots img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); background: #0e0c0d; image-rendering: pixelated; display: block; }
   .go { align-self: flex-start; font-weight: 700; font-size: 15px; padding: 14px 22px; border-radius: 10px; background: var(--c); color: #121011; }
+  .dev.fm1 { grid-column: 1 / -1; }
+  .dev .shots.three { grid-template-columns: repeat(3, 1fr); max-width: 560px; }
   .dev.next { --c: var(--pink); border-style: dashed; justify-content: center; text-align: center; align-items: center; }
   .dev.next .plus { font-size: 72px; font-weight: 200; line-height: 1; color: var(--pink); }
   .dev.next .go { align-self: center; background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
@@ -90,17 +92,24 @@
 <main><div class="wrap">
   <h2 class="sec">Devices</h2>
   <div class="devices">
-    <a class="dev" href="https://fm1.designburgapps.com/" style="--c: var(--cyan)">
-      <h3>M-VAVE FM-1<small id="fm1n">18 firmwares</small></h3>
+    <a class="dev fm1" href="https://fm1.designburgapps.com/" style="--c: var(--cyan)">
+      <h3>M-VAVE FM-1<small id="fm1n">22 firmwares</small></h3>
       <div class="shots" id="shots"></div>
       <p>The little FM synth with a sequencer, turned into a sampler, a DX7, a groovebox, a dungeon synth, a kalimba and more:
          synths, grooveboxes, drums and chord instruments by their makers, each installed in a minute, and back to the official firmware any time.</p>
       <span class="go">Open the FM-1 hub →</span>
     </a>
+    <a class="dev" href="https://chancethemaker.github.io/felucca-smk/" target="_blank" rel="noopener" style="--c: #ff6b5e">
+      <h3>M-VAVE SMK-37 Pro<small>1 firmware · beta</small></h3>
+      <div class="shots three"><img src="img/smk-mix.png" alt="Felucca SMK: the mix page" loading="lazy"><img src="img/smk-steps.png" alt="Felucca SMK: the step editor" loading="lazy"><img src="img/smk-envelope.png" alt="Felucca SMK: the envelope" loading="lazy"></div>
+      <p>The 37-key controller with pads, encoders and faders becomes a synth with four tracks and a sequencer: <b>Felucca SMK</b> by
+         Chance Roth, for the Pro and the Elite. It installs from its own page (it needs the official 016 firmware first).</p>
+      <span class="go">Felucca SMK →</span>
+    </a>
     <section class="dev next">
       <div class="plus">+</div>
       <h3 style="color: var(--fg)">Your device</h3>
-      <p>The next one is on its way. Made open-source firmware for another small music machine? It goes here with its own hub.</p>
+      <p>Made open-source firmware for another small music machine? It goes here with its own hub.</p>
       <a class="go" href="mailto:sven@designburg.net?subject=The%20Firmware%20Hub">Mail sven@designburg.net</a>
     </section>
   </div>
