@@ -27,114 +27,114 @@ OUT = HERE / "fm1"
 BLK, KEEP, BLOCKS = 0x30, 0x2F, 20                # (as fm1pkg.js productOf)
 
 # id, editor / play (its web editor, its version in the browser), kind (the page's filter, one or a list: synth,
-# groove, drums, chords, dev), name, author, repo, the identity the running firmware reports (regex), what it is; source: "github" (the
+# groove, drums, chords, dev), added (the day it came on the hub, not its release), name, author, repo, the identity the running firmware reports (regex), what it is; source: "github" (the
 # latest release's .fwsc), "pages:<its web installer>" (no releases: the package its installer names) or a path in this machine's checkouts (our own, deployed from there)
 FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their GitHub stars)
     # (Salt, ChoralRoot, Jangada, Melodee, Hortator, GHOULBOX, Bubba, Floyd, DX7 Banks, WaveLoop report numbers the others use too: their check is any FM-1
     # identity, the update loader is checked as for all; the page names the running one only when it is unambiguous)
-    dict(id="zp12", editor="https://zp12.designburgapps.com/editor/",
+    dict(id="zp12", added="2026-10-08", editor="https://zp12.designburgapps.com/editor/",
          kind="drums", name="zp12", author="zvenson", repo="zvenson/zp12", ident=r"FM-1_97\d",
          src="zp12:docs/install/firmware", site="https://zp12.designburgapps.com",
          what="A standalone 12-bit sampler inspired by the E-mu SP-1200: sample in the browser (mic, line-in or a "
               "file), unplug, and the FM-1 plays on its own: nothing smoothed, loops and songs."),
-    dict(id="hortator", play="https://deadactive.github.io/hortator/",
+    dict(id="hortator", added="2026-10-08", play="https://deadactive.github.io/hortator/",
          kind="drums", name="Hortator", author="DEADACTIVE", repo="deadactive/hortator", ident=r"FM-1_\d{3,8}", src="github",
          site="https://deadactive.github.io/hortator/",
          what="A drum machine: eight tracks of drums, a step sequencer, Grids, a pumping compressor, LFOs, resonators and "
               "live effects. Play it in the browser first."),
-    dict(id="felucca", editor="https://hugelton.github.io/Felucca/webapp/editor/", play="https://hugelton.github.io/Felucca/webapp/try/",
+    dict(id="felucca", added="2026-10-08", editor="https://hugelton.github.io/Felucca/webapp/editor/", play="https://hugelton.github.io/Felucca/webapp/try/",
          kind=["synth", "groove", "dev"], name="Felucca", author="Leo Kuroshita (Hügelton Instruments)", repo="hugelton/Felucca",
          ident=r"FM-1_91\d", src="github",
          what="The custom firmware the others build on: the FM-1's own synth engines, a sequencer, effects and a "
               "better panel, with an editor in the browser."),
-    dict(id="salt", editor="https://chancethemaker.github.io/Felucca/webapp/editor/",
+    dict(id="salt", added="2026-10-08", editor="https://chancethemaker.github.io/Felucca/webapp/editor/",
          kind=["synth", "groove"], name="Felucca [Salt]", author="Chance Roth (ChanceTheMaker)", repo="ChanceTheMaker/Felucca",
          ident=r"FM-1_\d{3,8}", src="github",
          what="Felucca with a hardware-inspired Studio in the browser (play it there without an FM-1): many engines, "
               "presets, skins. A beta."),
-    dict(id="jangada", editor="https://zednaked.github.io/jangada/webapp/editor/", play="https://zednaked.github.io/jangada/webapp/studio/",
+    dict(id="jangada", added="2026-10-08", editor="https://zednaked.github.io/jangada/webapp/editor/", play="https://zednaked.github.io/jangada/webapp/studio/",
          kind=["synth", "groove"], name="Jangada", author="zednaked", repo="zednaked/jangada", ident=r"FM-1_\d{3,8}", src="github",
          what="Dark, industrial, Brazilian: drones that breathe, ten engines (6-op FM, a superwave analog with a ladder "
               "filter), four tracks, a mod matrix, live effects."),
-    dict(id="ghoulbox", editor="https://jasonpersinger.me/ghoulbox-fm1-dungeon-synth/webapp/editor/",
+    dict(id="ghoulbox", added="2026-10-09", editor="https://jasonpersinger.me/ghoulbox-fm1-dungeon-synth/webapp/editor/",
          kind=["synth", "groove"], name="GHOULBOX", author="Jason Persinger", repo="jasonpersinger/ghoulbox-fm1-dungeon-synth",
          ident=r"FM-1_\d{3,8}", src="github", site="https://jasonpersinger.me/ghoulbox-fm1-dungeon-synth/",
          what="Dungeon synth: a cathedral hall reverb, tape and crush, a hurdy-gurdy engine, choirs, organs and "
               "recorded psaltery and harp, an old-RPG screen with wall torches."),
-    dict(id="melodee", editor="https://keremimo.github.io/melodee/webapp/editor/",
+    dict(id="melodee", added="2026-10-08", editor="https://keremimo.github.io/melodee/webapp/editor/",
          kind=["synth", "groove"], name="Melodee", author="keremimo", repo="keremimo/melodee", ident=r"FM-1_\d{3,8}", src="github",
          what="Total playing pleasure, far beyond Felucca: recording without quantize, microtonal scales, a Casio CZ-1, "
               "a bit-by-bit Dexed, scale modes made for an MPC Sample as its companion."),
-    dict(id="sloop", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
+    dict(id="sloop", added="2026-10-08", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
          kind="groove", name="SLOOP", author="isod89", repo="isod89/sloop-fm1", ident=r"FM-1_900", src="github",
          what="A live groovebox: tracks, layers, a step sequencer, song mode, punch-in effects and samples, played "
               "on the FM-1 in real time."),
-    dict(id="bubba", editor="https://erbubar23.github.io/sloop-fm1/webapp/editor/",
+    dict(id="bubba", added="2026-10-09", editor="https://erbubar23.github.io/sloop-fm1/webapp/editor/",
          kind=["groove", "synth", "drums"], name="Bubba", author="Erbubar23", repo="Erbubar23/sloop-fm1", ident=r"FM-1_\d{3,8}",
          src="github", site="https://erbubar23.github.io/sloop-fm1/",
          what="An eight-track groovebox you play live: seven synths and a drum machine, 38 kits, a sampler that slices "
               "your loops on the device and a looper on every track. No factory patterns: everything you hear, you play."),
-    dict(id="floyd", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
+    dict(id="floyd", added="2026-10-09", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
          kind="synth", name="SLOOP Floyd FM", author="René Bohne", repo="renebohne/sloop-fm1", ident=r"FM-1_\d{3,8}",
          src="github", pkg=r"sloop-[^/\"]+\.fwsc",              # (its release carries a felucca-*.fwsc too: the sloop one)
          what="SLOOP with a visual four-operator FM engine after Floyd Steinberg's 4-OP idea: an ADSR per operator, "
               "seven pages, a live oscilloscope that draws the envelopes as you play."),
-    dict(id="sloopbanks", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
+    dict(id="sloopbanks", added="2026-10-09", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
          kind=["groove", "synth"], name="SLOOP DX7 Banks", author="majnikool", repo="majnikool/sloop-fm1", ident=r"FM-1_\d{3,8}",
          src="github",
          what="SLOOP 2.4 with up to twelve DX7 voice banks, kept and named in the editor, presets by kind. Test builds: "
               "back up first."),
-    dict(id="sloopdx", editor="https://dx7.designburgapps.com/webapp/editor/",
+    dict(id="sloopdx", added="2026-10-08", editor="https://dx7.designburgapps.com/webapp/editor/",
          kind=["groove", "synth"], name="sloopDX", author="zvenson", repo="zvenson/dxsloop", ident=r"FM-1_93\d",
          src="sloopdx:docs/firmware", site="https://dx7.designburgapps.com",
          what="SLOOP's live workflow with Dexed's DX7 engine and 128 steps a track: six operators, 32 algorithms, "
               "your own .syx banks, every voice edited on the FM-1, FM drums you program."),
-    dict(id="x0x", play="https://charlesvestal.github.io/fm1-x0x/emu/",
+    dict(id="x0x", added="2026-10-08", play="https://charlesvestal.github.io/fm1-x0x/emu/",
          kind="groove", name="X0X", author="Charles Vestal", repo="charlesvestal/fm1-x0x", ident=r"FM-1_90\d{5}",
          src="github",
          what="A groovebox: 909 and 808 drums, two 303s with TB-3PO, a breakbeat generator and song mode."),
-    dict(id="fomni", play="https://charlesvestal.github.io/fm1-fomni/emu/",
+    dict(id="fomni", added="2026-10-08", play="https://charlesvestal.github.io/fm1-fomni/emu/",
          kind="chords", name="FoMni", author="Charles Vestal", repo="charlesvestal/fm1-fomni", ident=r"FM-1_800\d{4}",
          src="github",
          what="A chord harp inspired by the Omnichord: strum the white keys, pick chords on the black ones."),
-    dict(id="choralroot", play="https://quixotic7.github.io/ChoralRootFM1/emu/",
+    dict(id="choralroot", added="2026-10-08", play="https://quixotic7.github.io/ChoralRootFM1/emu/",
          kind="chords", name="ChoralRoot", author="Quixotic7", repo="Quixotic7/ChoralRootFM1", ident=r"FM-1_\d{3,8}",
          src="github",
          what="A Telepathic Orchid-style chord instrument: one hand plays roots, the other shapes chords; voicings, "
               "performance modes, bass and a looper."),
-    dict(id="waveloop", editor="https://eli7vh.github.io/Felucca/webapp/editor/",
+    dict(id="waveloop", added="2026-10-09", editor="https://eli7vh.github.io/Felucca/webapp/editor/",
          kind=["synth", "groove"], name="WaveLoop FM-1", author="ELI7VH", repo="ELI7VH/Felucca", ident=r"FM-1_\d{3,8}",
          src="github", site="https://eli7vh.github.io/Felucca/mod/",
          what="Felucca played from an Arturia MiniLab 3: track faders, a DJ filter, momentary effect pads; 32 patches a "
               "bank, 12 evolving songs, revoiced 808 and CR78 kits."),
-    dict(id="dinghy",
+    dict(id="dinghy", added="2026-10-09",
          kind="dev", name="Dinghy", author="zvenson", repo="zvenson/dinghy", ident=r"FM-1_99\d", src="github",
          what="Your base for your own FM-1 firmware: everything under it done and documented (updates, USB rescue, "
               "USB-MIDI, USB audio, keys, screen, settings), a 4-voice sine on top. Fork it, replace the sine."),
-    dict(id="fimba", play="https://jadamsowers.github.io/fm1-fimba/",
+    dict(id="fimba", added="2026-10-08", play="https://jadamsowers.github.io/fm1-fimba/",
          kind=["synth", "chords"], name="FiMba-1", author="jadamsowers", repo="jadamsowers/fm1-fimba",
          ident=r"FM-1_800\d{4}", src="github", site="https://jadamsowers.github.io/fm1-fimba/",
          what="A physically modelled kalimba: tines laid out like the real one, thumb-roll chords, mbira patterns, "
               "a sound hole to cover, grains, tape and a plate reverb. Play it in the browser first."),
-    dict(id="jiant", editor="https://juanjiant-bit.github.io/JIANT/webapp/editor/", play="https://juanjiant-bit.github.io/JIANT/",
+    dict(id="jiant", added="2026-10-10", editor="https://juanjiant-bit.github.io/JIANT/webapp/editor/", play="https://juanjiant-bit.github.io/JIANT/",
          kind=["synth", "groove"], name="JIANT FM", author="juanjiant-bit", repo="juanjiant-bit/JIANT", ident=r"FM-1_\d{3,8}",
          src="pages:https://juanjiant-bit.github.io/JIANT/webapp/installer/", site="https://juanjiant-bit.github.io/JIANT/",
          what="A bio-synthetic groovebox: six tracks drawn as living beings in thermal colours, eight engines (FM6 with "
               "Dexed, analog, phase, voice…), mutating macros, song mode from SLOOP. Not yet tested much on a real FM-1."),
-    dict(id="chord", kind="chords", name="fm1-chord", author="math0ne", repo="math0ne/fm1-chord", ident=r"FM-1_\d{3,8}",
+    dict(id="chord", added="2026-10-12", kind="chords", name="fm1-chord", author="math0ne", repo="math0ne/fm1-chord", ident=r"FM-1_\d{3,8}",
          src="github",
          what="A chord machine after the HiChord, with extras: chords in a key under the white keys, slash chords and "
               "inversions, sounds, envelopes, effects and a looper."),
-    dict(id="fumi", kind=["synth", "chords"], name="FuMi-1", author="cartesive", repo="cartesive/fumi-1",
+    dict(id="fumi", added="2026-10-12", kind=["synth", "chords"], name="FuMi-1", author="cartesive", repo="cartesive/fumi-1",
          ident=r"FM-1_70\d{5}", src="github",
          what="A shigin conductor after the Suiko ST-50: its two rows of keys, the key set in honsū, equal or its own "
               "just tuning, a koto and twelve more sounds on a 6-op FM engine, ring time, vibrato, trill and a looper."),
-    dict(id="maku", play="https://okumurari2.github.io/maku/",
+    dict(id="maku", added="2026-10-12", play="https://okumurari2.github.io/maku/",
          kind=["groove", "synth"], name="MAKU", author="okumurari", repo="okumurari2/maku", ident=r"FM-1_\d{3,8}",
          src="github", site="https://okumurari2.github.io/maku/",
          what="An ambience machine for DJ interludes: switch it on and a random world in key plays, four parts, buttons "
               "that are verbs, and the worlds you like breed new ones. Clock follow. Play it in the browser first."),
-    dict(id="rainbow", play="https://joshbartlettband-web.github.io/felucca-rainbow/webapp/try/",
+    dict(id="rainbow", added="2026-10-12", play="https://joshbartlettband-web.github.io/felucca-rainbow/webapp/try/",
          kind=["chords", "groove"], name="Rainbow Mode", author="joshbartlettband-web", repo="joshbartlettband-web/felucca-rainbow",
          ident=r"FM-1_\d{3,8}", src="pages:https://joshbartlettband-web.github.io/felucca-rainbow/webapp/installer/",
          site="https://joshbartlettband-web.github.io/felucca-rainbow/",
@@ -247,7 +247,7 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
             if isinstance(e, urllib.error.HTTPError) and e.code == 404:
                 continue                              # (the repo deleted or private: off the page, back when it is again)
             if f["id"] in old and (out / old[f["id"]]["pkg"]).exists():
-                cat.append(old[f["id"]] | {k: f[k] for k in ("kind", "name", "author", "what")} | {k: f.get(k) for k in ("editor", "play")}
+                cat.append(old[f["id"]] | {k: f[k] for k in ("kind", "name", "author", "what")} | {k: f.get(k) for k in ("editor", "play", "added")}
                            | stars_daily(f, old[f["id"]]))   # (the stars on their own: a new count even without the release)
                 keep.add(Path(old[f["id"]]["pkg"]).name)
             continue
@@ -256,7 +256,7 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
             (out / "fw" / name).write_bytes(raw)
         keep.add(name)
         cat.append({k: f[k] for k in ("id", "kind", "name", "author", "repo", "ident", "what")} | {
-            "editor": f.get("editor"), "play": f.get("play"), **stars_daily(f, old.get(f["id"], {})),
+            "editor": f.get("editor"), "play": f.get("play"), "added": f.get("added"), **stars_daily(f, old.get(f["id"], {})),
             "site": f.get("site") or f"https://github.com/{f['repo']}", "version": version, "date": date[:10],
             "published": date,                        # (the time too: the page's "Recently updated" order)
             "pkg": "fw/" + name, "product": ident, "size": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),

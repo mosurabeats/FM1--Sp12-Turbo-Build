@@ -177,6 +177,7 @@
   .what { color: var(--text); font-size: 15.5px; flex: 1; margin: 4px 0 0; }
   .meta { color: var(--dim); font-size: 13px; }
   .meta a { color: var(--dim); text-decoration: underline; text-decoration-color: var(--line); }
+  .meta .added { font-weight: 600; }
   .fw button.go { background: var(--c); color: #121011; width: 100%; margin-top: 6px; }
   progress { width: 100%; height: 8px; display: none; accent-color: var(--c); }
   .fw .links { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -453,7 +454,7 @@ function render() {
         <div class="by">by ${esc(f.author)}</div>
         <div class="tags">${isNow ? '<span class="tag now">on your FM-1</span>' : ""}${badge(f)}${f.beta && !devOnly(f) ? '<span class="tag beta">beta</span>' : ""}${kindsOf(f).map((k) => `<span class="tag kind">${KIND_TAG[k] || k}</span>`).join("")}</div></div></div>
       <p class="what">${esc(f.what)}</p>
-      <div class="meta">${esc(f.date)} · ${Math.round(f.size / 1024)} KB · GPL-3.0 ·
+      <div class="meta">${f.added ? `<span class="added" title="On the hub since ${esc(f.added)}">added ${day(f.added)}</span> · ` : ""}<span title="Released ${esc(f.date)}">released ${day(f.date)}</span> · ${Math.round(f.size / 1024)} KB · GPL-3.0 ·
         <a href="${esc(f.site)}" target="_blank" rel="noopener">project</a> · <a href="${esc(f.release || f.site)}" target="_blank" rel="noopener">release</a> ·
         <a href="${esc(f.source)}" target="_blank" rel="noopener">source</a>${f.mirror ? ` (<a href="${esc(f.mirror)}">copy</a>)` : ""}</div>
       ${f.editor || f.play || kindsOf(f).includes("dev") && !devOnly(f) ? `<div class="links">${kindsOf(f).includes("dev") && !devOnly(f) ? `<a href="https://github.com/${esc(f.repo)}#readme" target="_blank" rel="noopener">⚓ Build your own on it</a>` : ""}${f.editor ? `<a href="${esc(f.editor)}" target="_blank" rel="noopener">✎ Editor</a>` : ""}${f.play ? `<a href="${esc(f.play)}" target="_blank" rel="noopener">▶ Play in the browser</a>` : ""}</div>` : ""}
@@ -475,6 +476,7 @@ function render() {
 const DAY = 864e5, SEEN_KEY = "fm1hub.seen";
 let seen = {};
 try { seen = JSON.parse(localStorage.getItem(SEEN_KEY) || "{}") || {}; } catch (e) { seen = {}; }
+const day = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 const isNew = (f) => f.date && Date.now() - Date.parse(f.date + "T00:00:00Z") < 3 * DAY;
 // the version for show: the number only ("2.5b-b28-test" -> "2.5b", "0.10.3-beta" -> "0.10.3 beta"); the full tag in the tooltip
 const short = (v) => { const m = /^v?(\d+(?:\.\d+)*[a-z]?)(.*)$/i.exec(v || ""); return !m ? v || "" : m[1] + (/beta/i.test(m[2]) ? " beta" : /alpha/i.test(m[2]) ? " alpha" : ""); };
@@ -491,7 +493,6 @@ function recent() {
   const all = [...cat].filter((f) => f.date).sort((a, b) => (b.published || b.date).localeCompare(a.published || a.date));
   const l = all.slice(0, Math.min(8, Math.max(3, all.filter(isNew).length)));   // (all of the last 3 days: 3 to 8)
   if (!l.length) return;
-  const day = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
   $("recent").innerHTML = `<div class="wrap"><span class="lbl"><span class="lt">Recently updated</span></span><div class="ticker"><div class="track">${l.map((f) =>
     `<a href="#fw-${esc(f.id)}" data-id="${esc(f.id)}" style="--c: ${LOOK[f.id] || "#3b4bf5"}" title="${esc(f.name)} ${esc(f.version)}: to its card">` +
     `<b>${esc(f.name)}</b> ${esc(short(f.version))} <span>· ${day(f.date)}</span>${isUpd(f) ? badge(f) : ""}</a>`).join("")}</div></div></div>`;
