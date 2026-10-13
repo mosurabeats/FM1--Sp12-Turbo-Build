@@ -308,7 +308,7 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
         old = {f["id"]: f for f in json.loads((out / "catalog.json").read_text())["firmwares"]}
     except (OSError, ValueError, KeyError):
         old = {}
-    keep, cat = set(), []
+    keep, cat, problems = set(), [], []
     for f in FIRMWARES:
         try:
             raw, version, date, rel_url, src_url = latest_github(f["repo"], f.get("pkg", r"[^/\"]+\.fwsc"), f.get("ver")) if f["src"] == "github" \
@@ -321,6 +321,7 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
                 raise ValueError(f"{version}: identity {ident!r} or the update loader not as expected")
         except Exception as e:                        # (GitHub down, a broken release: the last good one stays)
             print(f"fm1_sync: {f['name']}: {e}", file=sys.stderr)
+            problems.append({"id": f["id"], "name": f["name"], "repo": f["repo"], "error": str(e)[:300]})
             if isinstance(e, urllib.error.HTTPError) and e.code == 404:
                 continue                              # (the repo deleted or private: off the page, back when it is again)
             if f["id"] in old and (out / old[f["id"]]["pkg"]).exists():
@@ -342,6 +343,10 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
             "mirror": f"src/{f['id']}-{version}.tar.gz" if rel_url else None,
             "beta": bool(re.search(r"beta|alpha|rc|test", version, re.I) or version.startswith("0."))})
         print(f"fm1_sync: {f['name']:8} {version:14} {date[:10]}  {ident:14} {len(raw)} B")
+    # (what went wrong this run: DIR/problems.json, not served (nginx serves only catalog.json and fw/); the VIBE admin's
+    # task page shows it, mounted read-only into vibe-php)
+    (out / "problems.json").write_text(json.dumps({"at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                                                   "problems": problems}, indent=1, ensure_ascii=False) + "\n")
     if list(old.values()) == cat:                     # (the order counts too: it is the page's)
         print("fm1_sync: unchanged")
         return
