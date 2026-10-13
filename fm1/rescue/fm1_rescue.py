@@ -220,7 +220,7 @@ def fetch(url):
 
 
 def package(arg):
-    if os.path.exists(arg):
+    if os.path.isfile(arg):                              # a file; anything else (a folder of that name too) is a hub id
         return arg, open(arg, "rb").read()
     cat = json.loads(fetch(HUB + "/catalog.json"))["firmwares"]
     f = next((x for x in cat if x["id"] == arg), None)
