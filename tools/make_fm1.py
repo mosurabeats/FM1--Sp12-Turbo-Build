@@ -37,6 +37,8 @@ def main(sloopdx=str(HERE.parent / "sloopdx")):
     if snip.exists():
         for page in (out, kb / "index.html"):
             subprocess.run([sys.executable, str(snip), str(page)], check=True, capture_output=True)
+    (HERE / "fm1" / "rescue").mkdir(exist_ok=True)       # the rescue script, served next to the page (#rescue)
+    (HERE / "fm1" / "rescue" / "fm1_rescue.py").write_text((HERE / "tools" / "fm1_rescue.py").read_text(encoding="utf-8"), encoding="utf-8")
     print(f"make_fm1: {out}")
 
 
