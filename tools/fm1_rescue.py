@@ -65,6 +65,19 @@ def sfc(buf, size, key):
         enc(buf, i, min(size - i, 32), key ^ (i >> 2))
 
 
+_MAGIC = "孟黎我爱你，玉林".encode("gb2312")
+
+
+def mengli(data):
+    """the CRC cipher of the WL82's UBOOT1.00 memory reads / writes (jl-uboot-tool's jl_crc_cipher; its own inverse)"""
+    out = bytearray(data)
+    crc = crc16(b"\xff\xff", 0xFFFF)
+    for i in range(len(out)):
+        crc = crc16(_MAGIC[i % len(_MAGIC):i % len(_MAGIC) + 1], crc)
+        out[i] ^= crc & 0xFF
+    return bytes(out)
+
+
 # --------------------------------------------------- SCSI pass-through (Linux) ---
 
 class SgIoHdr(ctypes.Structure):
@@ -132,6 +145,9 @@ class Boot:
     def mem_write(self, addr, data):
         self.sg.run(cdb(0xFB, 0x06, addr.to_bytes(4, "big") + len(data).to_bytes(2, "big") + b"\x00"
                         + crc16(data).to_bytes(2, "little")), out=data)
+
+    def mem_read(self, addr, n):
+        return self.sg.run(cdb(0xFD, 0x07, addr.to_bytes(4, "big") + n.to_bytes(2, "big")), inlen=n)
 
     def mem_jump(self, addr, arg):
         return self.sg.run(cdb(0xFB, 0x08, addr.to_bytes(4, "big") + arg.to_bytes(2, "big")), inlen=16)
@@ -327,10 +343,9 @@ def main():
         die(f"{vendor} {model}: not the FM-1's chip (WL82 UBOOT1.00): stopping")
 
     b = Boot(sg)
-    try:                                                 # a run cut short may have left the helper running: never
-        running = FLASH_ID in b.read_id()                # write it over itself (the bare ROM does not answer this)
-    except (OSError, ScsiError):
-        running = False
+    # a run cut short may have left the helper running: never write it over itself. Both answer a memory read; the
+    # ROM sends RAM MengLi-ciphered, the helper sends it plain, so the helper's own first bytes, plain, mean it runs
+    running = b.mem_read(JL_ADDR, 16) == mengli(jl[:16])
     if running:
         print("the flash helper is already running (an earlier run): going on with it")
     else:
