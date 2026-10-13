@@ -109,6 +109,13 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          src="github", site="https://eli7vh.github.io/Felucca/mod/",
          what="Felucca played from an Arturia MiniLab 3: track faders, a DJ filter, momentary effect pads; 32 patches a "
               "bank, 12 evolving songs, revoiced 808 and CR78 kits."),
+    dict(id="obervave", added="2026-10-13",
+         kind=["synth", "groove"], name="OberVave", author="zvenson", repo="zvenson/obervave", ident=r"FM-1_95\d",
+         src="repo:docs/firmware",
+         what="An 8-voice analog-style poly in the spirit of the classic American polys of 1979-84: two oscillators a "
+              "voice, sync, cross-mod, a 12 / 24 dB filter with a SEM-style morph, an arpeggiator with hold, chorus, "
+              "ping-pong delay and a plate reverb. A two-track step sequencer played as sloopDX: live recording on top, "
+              "chords, long notes, a click and a count-in."),
     dict(id="dinghy", added="2026-10-09",
          kind="dev", name="Dinghy", author="zvenson", repo="zvenson/dinghy", ident=r"FM-1_99\d", src="github",
          what="Your base for your own FM-1 firmware: everything under it done and documented (updates, USB rescue, "
