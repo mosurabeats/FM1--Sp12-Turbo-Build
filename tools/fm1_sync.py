@@ -27,7 +27,7 @@ OUT = HERE / "fm1"
 BLK, KEEP, BLOCKS = 0x30, 0x2F, 20                # (as fm1pkg.js productOf)
 
 # id, editor / play (its web editor, its version in the browser), kind (the page's filter, one or a list: synth,
-# groove, drums, chords, dev), added (the day it came on the hub, not its release), name, author, repo, the identity the running firmware reports (regex), what it is; source: "github" (the
+# groove, drums, chords, dev, other), added (the day it came on the hub, not its release), name, author, repo, the identity the running firmware reports (regex), what it is; source: "github" (the
 # latest release's .fwsc), "pages:<its web installer>" (no releases: the package its installer names), "repo:<dir>" (no releases: the newest
 # package committed in that directory of the repository, its tag v<version>) or a path in this machine's checkouts (our own, deployed from there)
 FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their GitHub stars)
@@ -182,7 +182,7 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          what="Six tracks of synths and drums with a groovebox's workflow: fourteen engines, a 64-step sequencer with "
               "chords, ratchets, trig conditions and locks, songs, PERFORM with scenes, six themes and a browser editor. "
               "Built on Felucca 1.1.5; its sounds and projects load."),
-    dict(id="fart", added="2026-10-13", kind="groove", name="Fart Machine One", author="adamcharleswilsonmusic-code",
+    dict(id="fart", added="2026-10-13", kind="other", name="Fart Machine One", author="adamcharleswilsonmusic-code",
          repo="adamcharleswilsonmusic-code/Fart-Machine-One", ident=r"FM-1_701", src="github",
          what="A questionable musical instrument: eleven artisanal farts, reverb, delay and a sixteen-step sequencer."),
     dict(id="orbit", added="2026-10-13", kind=["groove", "synth"], name="ORBIT", author="dspaudio", repo="dspaudio/orbit",
