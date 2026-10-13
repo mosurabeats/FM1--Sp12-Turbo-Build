@@ -144,7 +144,7 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          what="An ambience machine for DJ interludes: switch it on and a random world in key plays, four parts, buttons "
               "that are verbs, and the worlds you like breed new ones. Clock follow. Play it in the browser first."),
     dict(id="rainbow", added="2026-10-12", play="https://joshbartlettband-web.github.io/felucca-rainbow/webapp/try/",
-         kind=["chords", "groove"], name="Rainbow Mode", author="joshbartlettband-web", repo="joshbartlettband-web/felucca-rainbow",
+         kind="other", name="Rainbow Mode", author="joshbartlettband-web", repo="joshbartlettband-web/felucca-rainbow",
          ident=r"FM-1_\d{3,8}", src="pages:https://joshbartlettband-web.github.io/felucca-rainbow/webapp/installer/",
          site="https://joshbartlettband-web.github.io/felucca-rainbow/",
          what="A music toy for little children: 63 cartoon friends, every key in tune, chords, strumming, songs to follow "
@@ -155,7 +155,7 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          what="A generative ambient machine after Music for Airports: it plays itself from the start, breathing voices, "
               "bells on tape loops of unequal length, a gliding bass. You do not perform it, you tend it."),
     dict(id="ctl", added="2026-10-13", play="https://charlesvestal.github.io/fm1-ctl/emu/",
-         kind=["chords", "groove"], name="CTL-1", author="Charles Vestal", repo="charlesvestal/fm1-ctl", ident=r"FM-1_6000\d{3}",
+         kind=["chords", "other"], name="CTL-1", author="Charles Vestal", repo="charlesvestal/fm1-ctl", ident=r"FM-1_6000\d{3}",
          src="github", site="https://charlesvestal.github.io/fm1-ctl/",
          what="A MIDI controller: notes in any scale with its chords on the black keys, four banks of knobs, an "
               "arpeggiator and Euclidean drums, with General MIDI sounds of its own when nothing is connected."),
