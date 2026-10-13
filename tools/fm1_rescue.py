@@ -30,7 +30,7 @@ JL_URL = f"https://raw.githubusercontent.com/kagaimiq/jl-uboot-tool/{JL_COMMIT}/
 JL_SHA256 = "d41da6126760c9d66660bcc0cac8d27d221806c5e369a8036921efe68dca5376"
 JL_ADDR, JL_ARG = 0x01C02000, 0x0001             # where it runs; its argument: SPI NOR flash
 APP_LO, APP_HI, SEC, CH = 0x4000, 0x93000, 0x1000, 256
-FLASH_ID = bytes([0x85, 0x60, 0x14])
+FLASH_ID = bytes([0x85, 0x60, 0x14])               # the FM-1's flash chip (JEDEC)
 UBOOT_KEY = bytes([0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7])
 LOADER_MARK = b"FELUCCA-LOADER-1"
 
@@ -352,8 +352,10 @@ def main():
         for off in range(0, len(jl), 512):               # stored MengLi-encrypted; the ROM decrypts it as it lands
             b.mem_write(JL_ADDR + off, jl[off:off + 512])
         b.mem_jump(JL_ADDR, JL_ARG)
-    if FLASH_ID not in b.read_id():
-        die("the flash chip is not the FM-1's: stopping, nothing written (power the FM-1 off and on)")
+    rid = b.read_id()                                    # (the helper answers one byte late: 00 85 60 ...)
+    if FLASH_ID[:2] not in rid:
+        die(f"the flash chip is not the FM-1's (id answer {rid.hex(' ')}): stopping, nothing written "
+            "(power the FM-1 off and on)")
     key = chip_key(b)
     blk = bytearray(new[:32])
     sfc(blk, 32, key)
