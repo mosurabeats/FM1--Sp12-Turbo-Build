@@ -327,9 +327,16 @@ def main():
         die(f"{vendor} {model}: not the FM-1's chip (WL82 UBOOT1.00): stopping")
 
     b = Boot(sg)
-    for off in range(0, len(jl), 512):                   # stored MengLi-encrypted; the ROM decrypts it as it lands
-        b.mem_write(JL_ADDR + off, jl[off:off + 512])
-    b.mem_jump(JL_ADDR, JL_ARG)
+    try:                                                 # a run cut short may have left the helper running: never
+        running = FLASH_ID in b.read_id()                # write it over itself (the bare ROM does not answer this)
+    except (OSError, ScsiError):
+        running = False
+    if running:
+        print("the flash helper is already running (an earlier run): going on with it")
+    else:
+        for off in range(0, len(jl), 512):               # stored MengLi-encrypted; the ROM decrypts it as it lands
+            b.mem_write(JL_ADDR + off, jl[off:off + 512])
+        b.mem_jump(JL_ADDR, JL_ARG)
     if FLASH_ID not in b.read_id():
         die("the flash chip is not the FM-1's: stopping, nothing written (power the FM-1 off and on)")
     key = chip_key(b)
