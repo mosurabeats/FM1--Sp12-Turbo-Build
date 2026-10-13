@@ -84,11 +84,19 @@
          -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hero { display: grid; grid-template-columns: 1fr minmax(0, 600px); gap: clamp(32px, 5vw, 96px); align-items: center; }
   .lead { font-size: 18.5px; color: var(--text); max-width: 34em; margin: 0 0 28px; }
-  .lineup { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 0 0 18px; }
-  .lineup a { display: block; border-radius: 12px; transition: transform .12s; } .lineup a:hover { transform: translateY(-2px); }
+  /* the lineup: two rows of screens drifting past each other (a slider, not a wall): paused under the pointer */
+  .lineup { --t: 92px; display: grid; gap: 8px; margin: 0 0 18px; padding: 3px 0;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); }
+  .lineup .row { overflow: hidden; padding: 3px 0; }
+  .lineup .lt { display: flex; gap: 8px; width: max-content; animation: drift 90s linear infinite; }
+  .lineup .row + .row .lt { animation-direction: reverse; animation-duration: 105s; }
+  .lineup:hover .lt, .lineup:focus-within .lt { animation-play-state: paused; }
+  @keyframes drift { to { transform: translateX(calc(-50% - 4px)); } }
+  .lineup a { flex: none; width: var(--t); display: block; border-radius: 12px; transition: transform .12s; } .lineup a:hover { transform: translateY(-2px); }
   .lineup a.ext { aspect-ratio: 1; box-sizing: border-box; overflow: hidden; border: 1px solid #ff3fa4; background: #0e0c0d; display: grid; place-content: center; text-align: center;
-                  color: var(--dim); font-size: clamp(7px, .7vw, 11px); letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.3; }
-  .lineup a.ext b { color: #ff3fa4; font-size: clamp(9px, 1.05vw, 16px); letter-spacing: 0; display: block; }
+                  color: var(--dim); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.3; }
+  .lineup a.ext b { color: #ff3fa4; font-size: 13px; letter-spacing: 0; display: block; }
   .lineup a:hover img { border-color: var(--fg); }
   .fw.flash { animation: flash 1.6s ease-out; }
   @keyframes flash { 0%, 30% { border-color: var(--c); box-shadow: 0 0 0 3px var(--c); } 100% { box-shadow: 0 0 0 0 transparent; } }
@@ -229,10 +237,11 @@
   pre#log { white-space: pre-wrap; font-size: 12px; color: var(--dim); max-height: 180px; overflow: auto; text-align: left; }
   footer { border-top: 1px solid var(--line); color: var(--dim); font-size: 13.5px; padding: 34px 0 54px; text-align: center; }
   footer .wrap { max-width: 900px; } footer a { color: var(--text); }
-  @media (max-width: 1000px) { .hero { grid-template-columns: 1fr; } .lineup { grid-template-columns: repeat(6, 1fr); } }
+  @media (max-width: 1000px) { .hero { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .lineup .lt { animation: none; } .lineup .row { overflow-x: auto; scrollbar-width: none; } }
   @media (max-width: 760px) { header { padding: 40px 0 32px; } .two { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; gap: 18px; }
     .bar > * { width: 100%; } .fw { padding: 0 22px 22px; } .card { padding: 26px 22px; } .wrap { padding: 0 16px; } .lead { font-size: 18px; }
-    .lineup { gap: 6px; } .lineup img { border-radius: 6px; } .fw .shot { margin: 0 -22px 8px; --h: 220px; }
+    .lineup { --t: 68px; gap: 6px; } .lineup .lt { gap: 6px; } .lineup img { border-radius: 8px; } .fw .shot { margin: 0 -22px 8px; --h: 220px; }
     .faq .qas { grid-template-columns: 1fr; } .status { font-size: 13px; } .warn { padding: 16px 18px; font-size: 14.5px; }
     .eyebrow, h2.sec { letter-spacing: 1.5px; font-size: 12px; } nav .home { display: none; } }
 </style>
@@ -268,7 +277,7 @@
     <a href="#official">this page too</a>. <b>Back up first.</b> The firmwares keep their projects, presets and samples in the same flash and in different
     ways: after a switch the new one may not read the old one's data, or start empty. Save what you made with the backup of the
     firmware you are on (each project's page says how) before you switch. <b>Stuck?</b> Hold OCT− while switching the FM-1 on
-    (USB rescue), then install again.</div></div>
+    (USB rescue), then install again; if no installer finds it at all: <a href="#rescue">Rescue</a>.</div></div>
 </div></header>
 
 <main><div class="wrap">
@@ -739,8 +748,13 @@ const LOGO = { sloop: "img/sloop-icon.png", dinghy: "img/dinghy-icon.png" };
 // Baud Girl: a link card, not in the catalogue (not open source, no stars to sort by): in the second row all the same
 const EXT = $("baudgirl"), EXT_AT = 4;
 const EXT_TILE = `<a href="#baudgirl" data-id="baudgirl" class="ext" title="Baud Girl (FM-1+VA), a link"><b>FM-1+VA</b>Baud Girl</a>`;
-function lineup() {
-  $("lineup").innerHTML = cat.map((f, i) => (i === EXT_AT ? EXT_TILE : "") + `<a href="#fw-${esc(f.id)}" data-id="${esc(f.id)}"><img src="img/${esc(f.id)}.png" alt="${esc(f.name)} on the FM-1" title="${esc(f.name)}" loading="lazy"></a>`).join("");
+function lineup() {                                      // two rows, each twice (the loop of the drift); the copy is for the eye only
+  const tiles = cat.map((f, i) => (i === EXT_AT ? EXT_TILE : "") + `<a href="#fw-${esc(f.id)}" data-id="${esc(f.id)}"><img src="img/${esc(f.id)}.png" alt="${esc(f.name)} on the FM-1" title="${esc(f.name)}" loading="lazy"></a>`);
+  const half = Math.ceil(tiles.length / 2);
+  $("lineup").innerHTML = [tiles.slice(0, half), tiles.slice(half)].map((r) => {
+    const once = r.join("");
+    return `<div class="row"><div class="lt">${once}${once.replaceAll("<a ", '<a tabindex="-1" aria-hidden="true" ')}</div></div>`;
+  }).join("");
   toCards($("lineup"));
 }
 // a link to a card (the pictures at the top, the recently updated bar): all kinds shown if a chip hides it, a flash
