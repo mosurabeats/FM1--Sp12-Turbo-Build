@@ -159,6 +159,11 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          src="github", site="https://charlesvestal.github.io/fm1-ctl/",
          what="A MIDI controller: notes in any scale with its chords on the black keys, four banks of knobs, an "
               "arpeggiator and Euclidean drums, with General MIDI sounds of its own when nothing is connected."),
+    dict(id="polly", added="2026-10-13", play="https://charlesvestal.github.io/fm1-polly/emu/",
+         kind=["groove", "chords"], name="Polly", author="Charles Vestal", repo="charlesvestal/fm1-polly", ident=r"FM-1_3\d{6}",
+         src="github", site="https://charlesvestal.github.io/fm1-polly/",
+         what="A pocket arranger after the QY70: pick a style, play three keys for a chord and a band of eight follows, "
+              "songs from sections, General MIDI sounds from Sonivox EAS, and a General MIDI module over MIDI in."),
     dict(id="etch", added="2026-10-13", kind="synth", name="ETCH", author="SikkenWorks", repo="SikkenWorks/ETCH",
          ident=r"FM-1_\d{3,8}", src="github", ver="pkg", site="https://etch.sikkenworks.com",   # (one fixed tag: the version from the package's name)
          what="Draw the sound: a waveform drawn and changed with the knobs, saved, morphed into another one, and a "
