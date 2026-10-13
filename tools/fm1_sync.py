@@ -70,11 +70,12 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          kind="groove", name="SLOOP", author="isod89", repo="isod89/sloop-fm1", ident=r"FM-1_900", src="github",
          what="A live groovebox: tracks, layers, a step sequencer, song mode, punch-in effects and samples, played "
               "on the FM-1 in real time."),
-    dict(id="bubba", added="2026-10-09", editor="https://erbubar23.github.io/sloop-fm1/webapp/editor/",
-         kind=["groove", "synth", "drums"], name="Bubba", author="Erbubar23", repo="Erbubar23/sloop-fm1", ident=r"FM-1_\d{3,8}",
-         src="github", site="https://erbubar23.github.io/sloop-fm1/",
-         what="An eight-track groovebox you play live: seven synths and a drum machine, 38 kits, a sampler that slices "
-              "your loops on the device and a looper on every track. No factory patterns: everything you hear, you play."),
+    dict(id="bubba", added="2026-10-13", play="https://erbubar23.github.io/bubba-machine/en/",
+         kind=["groove", "drums", "synth"], name="Bubba Machine", author="Erbubar23", repo="Erbubar23/bubba-machine",
+         ident=r"FM-1_003", src="github", pkg=r"bubba-machine-[^/\"]+\.fwsc", loader="mvave",   # (its releases carry bubba-diag too)
+         site="https://erbubar23.github.io/bubba-machine/en/",
+         what="A six-track groovebox written from scratch: TR drums from Plaits' 808 and 909 models, a sampler with a "
+              "16-slice slicer, a bass and three free tracks (analog, 6-op FM, 303 acid), scenes and fills, all at 44.1 kHz."),
     dict(id="floyd", added="2026-10-09", editor="https://isod89.github.io/sloop-fm1/webapp/editor/",
          kind="synth", name="SLOOP Floyd FM", author="René Bohne", repo="renebohne/sloop-fm1", ident=r"FM-1_\d{3,8}",
          src="github", pkg=r"sloop-[^/\"]+\.fwsc",              # (its release carries a felucca-*.fwsc too: the sloop one)
@@ -146,6 +147,50 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          site="https://joshbartlettband-web.github.io/felucca-rainbow/",
          what="A music toy for little children: 63 cartoon friends, every key in tune, chords, strumming, songs to follow "
               "and an ear game, notes on a staff, a volume cap for small ears."),
+    dict(id="amb", added="2026-10-13", play="https://charlesvestal.github.io/fm1-amb/emu/",
+         kind="synth", name="AMB-1", author="Charles Vestal", repo="charlesvestal/fm1-amb", ident=r"FM-1_\d{3,8}",
+         src="github", site="https://charlesvestal.github.io/fm1-amb/",
+         what="A generative ambient machine after Music for Airports: it plays itself from the start, breathing voices, "
+              "bells on tape loops of unequal length, a gliding bass. You do not perform it, you tend it."),
+    dict(id="ctl", added="2026-10-13", play="https://charlesvestal.github.io/fm1-ctl/emu/",
+         kind=["chords", "groove"], name="CTL-1", author="Charles Vestal", repo="charlesvestal/fm1-ctl", ident=r"FM-1_6000\d{3}",
+         src="github", site="https://charlesvestal.github.io/fm1-ctl/",
+         what="A MIDI controller: notes in any scale with its chords on the black keys, four banks of knobs, an "
+              "arpeggiator and Euclidean drums, with General MIDI sounds of its own when nothing is connected."),
+    dict(id="etch", added="2026-10-13", kind="synth", name="ETCH", author="SikkenWorks", repo="SikkenWorks/ETCH",
+         ident=r"FM-1_\d{3,8}", src="github", ver="pkg", site="https://etch.sikkenworks.com",   # (one fixed tag: the version from the package's name)
+         what="Draw the sound: a waveform drawn and changed with the knobs, saved, morphed into another one, and a "
+              "third waveform modulating the result."),
+    dict(id="fm106", added="2026-10-13", kind="synth", name="FM-106", author="PatttF", repo="PatttF/fm-106",
+         ident=r"FM-1_\d{3,8}", src="github", ver="tag",            # (tags Beta2, release: the tag as it is)
+         what="The Juno-106 emulation of KR-106 ported to the FM-1: six voices on both cores, the BBD stereo chorus, "
+              "128 factory presets and a 1980s Roland look."),
+    dict(id="tribe", added="2026-10-13", play="https://apiel.github.io/fm1-tribe/#emulator",
+         kind=["groove", "drums"], name="TRIBE", author="apiel", repo="apiel/fm1-tribe", ident=r"FM-1_\d{3,8}",
+         src="pages:https://apiel.github.io/fm1-tribe/install/", site="https://apiel.github.io/fm1-tribe/",
+         what="A ten-track groovebox where any engine plays on any track: kicks, 909 and 808 voices, the 303, sixteen "
+              "clips a track, scatter effects and four master knobs you assign. Built on X0X."),
+    dict(id="duell", added="2026-10-13", play="https://oscillr.github.io/DUELL/emu/",
+         kind="synth", name="DUELL", author="OSCILL/R", repo="oscillr/DUELL", ident=r"FM-1_\d{3,8}", src="github",
+         what="A multimorphing bitimbral synthesizer: two complete parts, three ways to play them together, and a "
+              "morph that glides between two versions of every sound."),
+    dict(id="skiff", added="2026-10-13", editor="https://illuminus5.github.io/skiff/",
+         kind=["groove", "synth"], name="Skiff", author="illuminus5", repo="illuminus5/skiff", ident=r"FM-1_710",
+         src="github", pkg=r"skiff-[^/\"]+\.fwsc", site="https://illuminus5.github.io/skiff/",
+         what="Six tracks of synths and drums with a groovebox's workflow: fourteen engines, a 64-step sequencer with "
+              "chords, ratchets, trig conditions and locks, songs, PERFORM with scenes, six themes and a browser editor. "
+              "Built on Felucca 1.1.5; its sounds and projects load."),
+    dict(id="fart", added="2026-10-13", kind="groove", name="Fart Machine One", author="adamcharleswilsonmusic-code",
+         repo="adamcharleswilsonmusic-code/Fart-Machine-One", ident=r"FM-1_701", src="github",
+         what="A questionable musical instrument: eleven artisanal farts, reverb, delay and a sixteen-step sequencer."),
+    dict(id="orbit", added="2026-10-13", kind=["groove", "synth"], name="ORBIT", author="dspaudio", repo="dspaudio/orbit",
+         ident=r"FM-1_\d{3,8}", src="github",
+         what="A four-track groovebox: three synths and a drum machine in a colour-coded Synth, Drum, Event Tape and "
+              "Mixer workflow, loops turned into songs, user macros, screens after the OP-1. Based on SLOOP."),
+    dict(id="felucca8", added="2026-10-13", kind=["synth", "groove"], name="Felucca 8 Patterns", author="echoe",
+         repo="echoe/Felucca_8_patterns", ident=r"FM-1_\d{3,8}", src="github",
+         what="Felucca 1.5.1 with eight sequences a track to switch between and chain one after another; the user "
+              "samples are left out to make room."),
 ]
 
 
@@ -160,7 +205,14 @@ def get(url, accept="application/vnd.github+json"):
         return r.read()
 
 
-def latest_feed(repo, pkg=r"[^/\"]+\.fwsc"):
+def version_of(tag, asset, ver=None):
+    """the version shown: the tag's number; ver="tag" the tag as it is (Beta2), ver="pkg" the package's name (a fixed tag)"""
+    if ver == "pkg":
+        return re.search(r"\d+(?:\.\d+)+", asset).group(0)
+    return tag if ver == "tag" else re.sub(r"^\D*", "", tag)
+
+
+def latest_feed(repo, pkg=r"[^/\"]+\.fwsc", ver=None):
     """as latest_github from the releases feed and the assets' page: no API, so no 60 an hour (PC and Pi share one)"""
     feed = get(f"https://github.com/{repo}/releases.atom", "application/atom+xml").decode()
     entries = sorted(re.findall(r"<entry>(.*?)</entry>", feed, re.S),   # (newest first: the feed goes by the tags)
@@ -170,24 +222,24 @@ def latest_feed(repo, pkg=r"[^/\"]+\.fwsc"):
         page = get(f"https://github.com/{repo}/releases/expanded_assets/{tag}", "text/html").decode()
         asset = re.search(r'href="(/[^"]+/releases/download/[^/"]+/' + pkg + ')"', page)
         if asset:
-            return (get("https://github.com" + asset.group(1), "application/octet-stream"), re.sub(r"^\D*", "", tag),
+            return (get("https://github.com" + asset.group(1), "application/octet-stream"), version_of(tag, asset.group(1).rsplit("/", 1)[-1], ver),
                     re.search(r"<updated>([^<]+)</updated>", entry).group(1)[:19] + "Z",
                     f"https://github.com/{repo}/releases/tag/{tag}", f"https://github.com/{repo}/tree/{tag}")
     raise ValueError("no release with a .fwsc")
 
 
-def latest_github(repo, pkg=r"[^/\"]+\.fwsc"):
+def latest_github(repo, pkg=r"[^/\"]+\.fwsc", ver=None):
     """the newest release with a package (pkg: which one when a release has several)"""
     try:
         rels = json.loads(get(f"https://api.github.com/repos/{repo}/releases?per_page=10"))   # (betas too: "latest" skips them)
     except urllib.error.HTTPError as e:
         if e.code not in (403, 429):
             raise
-        return latest_feed(repo, pkg)                      # (the API's limit reached)
+        return latest_feed(repo, pkg, ver)                 # (the API's limit reached)
     rels.sort(key=lambda r: r.get("published_at") or "", reverse=True)   # (the API goes by the tags, not by the release)
     rel = next(r for r in rels if not r["draft"] and any(re.fullmatch(pkg, a["name"]) for a in r["assets"]))
     asset = next(a for a in rel["assets"] if re.fullmatch(pkg, a["name"]))
-    return (get(asset["browser_download_url"], "application/octet-stream"), re.sub(r"^\D*", "", rel["tag_name"]),   # (v1.2, drum-v0.14.0: from the first digit)
+    return (get(asset["browser_download_url"], "application/octet-stream"), version_of(rel["tag_name"], asset["name"], ver),   # (v1.2, drum-v0.14.0: from the first digit)
             rel["published_at"], f"https://github.com/{repo}/releases/tag/{rel['tag_name']}",
             f"https://github.com/{repo}/tree/{rel['tag_name']}")
 
@@ -259,18 +311,20 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
     keep, cat = set(), []
     for f in FIRMWARES:
         try:
-            raw, version, date, rel_url, src_url = latest_github(f["repo"], f.get("pkg", r"[^/\"]+\.fwsc")) if f["src"] == "github" \
+            raw, version, date, rel_url, src_url = latest_github(f["repo"], f.get("pkg", r"[^/\"]+\.fwsc"), f.get("ver")) if f["src"] == "github" \
                 else latest_pages(f["src"], f["repo"]) if f["src"].startswith("pages:") \
                 else latest_repo(f["src"], f["repo"]) if f["src"].startswith("repo:") else latest_local(f["src"], sloopdx)
             ident = product_of(raw)
-            if not re.fullmatch(f["ident"], ident) or b"FELUCCA-LOADER-1" not in raw:
+            # (Felucca's update loader; loader="mvave": M-VAVE's own, the official V15 with its app replaced, installed
+            # and resumed as the official one is: page.install() passes the identity to resume())
+            if not re.fullmatch(f["ident"], ident) or (b"FELUCCA-LOADER-1" not in raw) != (f.get("loader") == "mvave"):
                 raise ValueError(f"{version}: identity {ident!r} or the update loader not as expected")
         except Exception as e:                        # (GitHub down, a broken release: the last good one stays)
             print(f"fm1_sync: {f['name']}: {e}", file=sys.stderr)
             if isinstance(e, urllib.error.HTTPError) and e.code == 404:
                 continue                              # (the repo deleted or private: off the page, back when it is again)
             if f["id"] in old and (out / old[f["id"]]["pkg"]).exists():
-                cat.append(old[f["id"]] | {k: f[k] for k in ("kind", "name", "author", "what")} | {k: f.get(k) for k in ("editor", "play", "added")}
+                cat.append(old[f["id"]] | {k: f[k] for k in ("kind", "name", "author", "what")} | {k: f.get(k) for k in ("editor", "play", "added", "loader")}
                            | stars_daily(f, old[f["id"]]))   # (the stars on their own: a new count even without the release)
                 keep.add(Path(old[f["id"]]["pkg"]).name)
             continue
@@ -279,7 +333,7 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
             (out / "fw" / name).write_bytes(raw)
         keep.add(name)
         cat.append({k: f[k] for k in ("id", "kind", "name", "author", "repo", "ident", "what")} | {
-            "editor": f.get("editor"), "play": f.get("play"), "added": f.get("added"), **stars_daily(f, old.get(f["id"], {})),
+            "editor": f.get("editor"), "play": f.get("play"), "added": f.get("added"), "loader": f.get("loader"), **stars_daily(f, old.get(f["id"], {})),
             "site": f.get("site") or f"https://github.com/{f['repo']}", "version": version, "date": date[:10],
             "published": date,                        # (the time too: the page's "Recently updated" order)
             "pkg": "fw/" + name, "product": ident, "size": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),

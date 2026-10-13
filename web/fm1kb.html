@@ -1,0 +1,274 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only  (C) 2026 Sven Trogus
+     The FM-1 Firmware Hub's knowledge base (fm1.designburgapps.com/kb/): what the hub checks and why, for players and
+     for firmware authors. tools/make_fm1.py writes it as fm1/kb/index.html; the identity table reads ../catalog.json. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Base – The FM-1 Firmware Hub</title>
+<meta name="description" content="How the FM-1 Firmware Hub works: firmware packages, identities, the update loader, what is checked before a firmware is listed, your data, going back to the official firmware, and how to get your own firmware listed.">
+<meta name="author" content="zvenson">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://fm1.designburgapps.com/kb/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="The FM-1 Firmware Hub">
+<meta property="og:url" content="https://fm1.designburgapps.com/kb/">
+<meta property="og:title" content="Knowledge Base – The FM-1 Firmware Hub">
+<meta property="og:description" content="Packages, identities, update loaders, checks, backups, and how to get a firmware listed.">
+<meta property="og:image" content="https://fm1.designburgapps.com/og.png">
+<meta name="theme-color" content="#151213">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23151213'/%3E%3Ctext x='16' y='21' font-family='Arial' font-weight='900' font-size='12' text-anchor='middle' fill='%2342f5f5'%3EFM1%3C/text%3E%3C/svg%3E">
+<style>
+  /* the hub's look (web/fm1.html): warm dark, cyan / blue / pink / beige */
+  :root { --bg: #151213; --panel: #221e1f; --panel2: #2e2a2b; --line: #3a3435; --fg: #efe8e1; --dim: #a39a94; --text: #d8d0c9;
+          --cyan: #42f5f5; --blue: #afd9f4; --pink: #f4c0cb; --beige: #e6d1b9; --ok: #5fe3a1; --warn: #f2c46d; }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; scroll-padding-top: 20px; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16.5px/1.7 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  .wrap { margin: 0 auto; padding: 0 clamp(16px, 4vw, 72px); width: 100%; }
+  nav { border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+  .mark { font-size: 21px; font-weight: 300; color: var(--fg); letter-spacing: -.2px; } .mark:hover { text-decoration: none; }
+  .mark b { font-weight: 800; color: var(--cyan); }
+  nav .home { font-size: 14px; color: var(--dim); }
+  .strip { display: flex; height: 4px; } .strip i { flex: 1; }
+  .strip i:nth-child(1) { background: var(--cyan); } .strip i:nth-child(2) { background: var(--blue); }
+  .strip i:nth-child(3) { background: var(--pink); } .strip i:nth-child(4) { background: var(--beige); }
+  header { padding: 52px 0 36px;
+           background: radial-gradient(900px 420px at 80% 20%, rgba(66, 245, 245, .10), transparent 70%),
+                       radial-gradient(700px 380px at 5% 100%, rgba(244, 192, 203, .08), transparent 70%); }
+  .eyebrow { font-size: 13px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--beige); margin: 0 0 14px; }
+  h1 { font-size: clamp(38px, 4.6vw, 72px); line-height: 1.05; font-weight: 300; margin: 0 0 18px; letter-spacing: -.5px; }
+  h1 b { font-weight: 800; background: linear-gradient(90deg, var(--cyan), var(--blue) 45%, var(--pink) 75%, var(--beige));
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { font-size: 18.5px; color: var(--text); max-width: 40em; margin: 0; }
+  .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); padding-top: 24px; padding-bottom: 80px; align-items: start; }
+  .toc { position: sticky; top: 20px; font-size: 14.5px; }
+  .toc p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--beige); margin: 0 0 10px; }
+  .toc a { display: block; color: var(--dim); padding: 5px 0 5px 12px; border-left: 2px solid var(--line); }
+  .toc a:hover { color: var(--fg); text-decoration: none; border-left-color: var(--cyan); }
+  article { max-width: 820px; }
+  section { padding: 8px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+  section:last-child { border-bottom: 0; }
+  h2 { font-size: 28px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.2px; }
+  h2 + .who { font-size: 12px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--dim); margin: 0 0 18px; }
+  h3 { font-size: 18px; margin: 26px 0 6px; color: var(--fg); }
+  p, li { color: var(--text); } b, strong { color: var(--fg); }
+  ul, ol { padding-left: 22px; } li { margin: 4px 0; }
+  code { font: 600 14px/1.4 ui-monospace, "SF Mono", Menlo, monospace; background: var(--panel2); padding: 2px 6px; border-radius: 5px; color: var(--blue); }
+  .note { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 12px; padding: 16px 22px; margin: 18px 0; }
+  .note.warn { border-left-color: var(--warn); }
+  .note p { margin: 0; }
+  .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; counter-reset: s; }
+  .flow div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 14.5px; color: var(--text); }
+  .flow div::before { counter-increment: s; content: counter(s); display: block; font-weight: 800; color: var(--cyan); font-size: 22px; line-height: 1.2; }
+  .flow b { display: block; }
+  .tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--dim); font-weight: 600; font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; background: var(--panel); }
+  tr:last-child td { border-bottom: 0; }
+  td.id { font: 600 14px ui-monospace, "SF Mono", Menlo, monospace; color: var(--blue); white-space: nowrap; }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .tag.own { background: rgba(95, 227, 161, .14); color: var(--ok); }
+  .tag.shared { background: rgba(242, 196, 109, .14); color: var(--warn); }
+  .tag.mv { background: rgba(175, 217, 244, .14); color: var(--blue); }
+  .tabmsg { color: var(--dim); font-size: 14px; }
+  footer { border-top: 1px solid var(--line); color: var(--dim); font-size: 13.5px; padding: 34px 0 54px; text-align: center; }
+  footer a { color: var(--text); }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .toc { position: static; display: none; } }
+  @media (max-width: 640px) { .flow { grid-template-columns: 1fr; } h2 { font-size: 24px; } .lead { font-size: 17.5px; } nav .home { display: none; }
+    .eyebrow { letter-spacing: 1.5px; font-size: 12px; } th, td { padding: 8px 10px; } }
+</style>
+</head>
+<body>
+<nav><div class="wrap"><a class="mark" href="https://fm1.designburgapps.com/">FM-1 <b>Firmware Hub</b></a>
+  <a class="home" href="https://fm1.designburgapps.com/">← All firmwares</a></div></nav>
+<div class="strip"><i></i><i></i><i></i><i></i></div>
+
+<header><div class="wrap">
+  <p class="eyebrow">The FM-1 Firmware Hub · Knowledge Base</p>
+  <h1>How the <b>hub</b> works.</h1>
+  <p class="lead">What a firmware package is, how the FM-1 tells which firmware it runs, what the hub checks before it lists
+    one, and what happens to your projects when you switch. For players, and for authors who want their firmware on the hub.</p>
+</div></header>
+
+<div class="wrap layout">
+<nav class="toc" aria-label="Contents"><p>Contents</p>
+  <a href="#package">The package</a>
+  <a href="#identity">The identity</a>
+  <a href="#loader">The update loader</a>
+  <a href="#install">What Install does</a>
+  <a href="#checks">What the hub checks</a>
+  <a href="#data">Your projects and samples</a>
+  <a href="#back">Back to the official firmware</a>
+  <a href="#listed">Getting your firmware listed</a>
+  <a href="#ids">All identities, live</a>
+</nav>
+
+<article>
+<section id="package">
+  <h2>The package: a .fwsc file</h2><p class="who">For everyone</p>
+  <p>Every FM-1 firmware comes as one file ending in <code>.fwsc</code>. It is the format of M-VAVE's own updater, and every
+    custom firmware uses it too. Inside are two programs: the <b>update loader</b>, a small helper that writes the firmware,
+    and the <b>firmware</b> itself, the instrument you play.</p>
+  <p>The first bytes of the file also carry the package's <b>identity</b>, a short name such as <code>FM-1_015</code>. The
+    official firmware V15 is <code>FM-1_015</code>. Custom firmwares pick their own.</p>
+</section>
+
+<section id="identity">
+  <h2>The identity: which firmware is this?</h2><p class="who">For everyone, and important for authors</p>
+  <p>A running FM-1 answers over USB with the identity of the firmware it runs. The hub uses that answer for one thing only:
+    after you press <b>Connect the FM-1</b>, the card of the firmware on your FM-1 gets the mark <b>on your FM-1</b>.</p>
+  <p>Many firmwares are built on Felucca, SLOOP or X0X, and several of them keep the number of the project they started from.
+    Then two or more firmwares answer with the same identity, and the hub cannot know which of them is on your FM-1.</p>
+  <div class="note"><p><b>A shared identity breaks nothing.</b> Installing, updating and going back work exactly the same.
+    The only difference: the hub does not mark any card as <b>on your FM-1</b> when more than one firmware fits. It says
+    which identity it sees, and you know which one you installed.</p></div>
+  <h3>For authors: please give your firmware its own number</h3>
+  <p>Pick an identity no other firmware uses. The <a href="#ids">table below</a> shows every identity on the hub right now.
+    A number that also encodes your version works well, as Charles Vestal's firmwares do: <code>FM-1_9010003</code> is X0X 1.0.3.
+    Keep the part before the version yours, so that no other project can collide with it. Change it in your build, release, and
+    tell us: your card then gets an exact check and the <b>on your FM-1</b> mark.</p>
+</section>
+
+<section id="loader">
+  <h2>The update loader</h2><p class="who">For everyone</p>
+  <p>The FM-1 cannot overwrite the program it is running. So an update happens in two steps: the running firmware first
+    starts the update loader from the new package, and the loader then writes the new firmware. The loader comes from the
+    <b>new</b> package, so every package brings its own.</p>
+  <h3>Felucca's loader</h3>
+  <p>Almost every custom firmware uses the loader from Felucca by Hügelton Instruments. While it waits in update mode, the
+    loader reports the new package's identity. For identities of the form <code>FM-1_9NN</code>, the hub picks up an
+    interrupted update: plug the cable back in, press Install again, and it continues where it stopped.</p>
+  <h3>M-VAVE's own loader</h3>
+  <p>The official V15 brings M-VAVE's loader. A firmware can also be built on top of the official V15 with only the
+    instrument replaced, as <b>Bubba Machine</b> is. Then it brings M-VAVE's loader too. The hub installs it the same way it
+    installs V15 itself, and it can resume an interrupted update of that firmware as well.</p>
+  <div class="note warn"><p><b>An update stopped halfway?</b> The FM-1 stays in update mode and waits. Plug it in again and
+    press <b>Install</b> on the same card. If the hub says the FM-1 is in another firmware's update mode, finish that update
+    with that firmware's own installer, or use the USB rescue described <a href="#back">below</a>.</p></div>
+</section>
+
+<section id="install">
+  <h2>What happens when you press Install</h2><p class="who">For everyone</p>
+  <div class="flow">
+    <div><b>Checked</b>The page loads the package from the hub and compares it with the catalogue: identity and SHA-256 fingerprint.</div>
+    <div><b>Loader</b>The running firmware reads the package over USB MIDI and starts the new update loader. The FM-1 restarts.</div>
+    <div><b>Written</b>The loader writes the firmware, the FM-1 restarts again and reports its new identity.</div>
+  </div>
+  <p>All of this runs in your browser, over Web MIDI, which only Chrome and Edge have. Nothing is sent to a server. It takes
+    about a minute. Do not unplug while it says <b>Writing</b>.</p>
+</section>
+
+<section id="checks">
+  <h2>What the hub checks, and what it does not</h2><p class="who">For everyone</p>
+  <p>The hub looks at every listed project's GitHub repository several times a day and takes its newest release. Before a
+    package is offered, it must pass these checks:</p>
+  <ul>
+    <li><b>It is an FM-1 package.</b> Its identity starts with <code>FM-1_</code> and matches what the project reports.</li>
+    <li><b>It has its update loader.</b> Felucca's loader, or M-VAVE's own for a firmware built on the official V15.</li>
+    <li><b>It is unchanged.</b> The hub mirrors the file byte for byte and pins its SHA-256 fingerprint. Your browser checks
+      that fingerprint again before it writes anything.</li>
+  </ul>
+  <p>A release that fails a check is not offered. The last good one stays on the card. If a repository disappears, its card
+    leaves the hub and comes back when the repository does.</p>
+  <div class="note warn"><p><b>What the hub does not check:</b> whether a firmware works well, sounds good or keeps your
+    data. The hub does not test the firmwares of other authors. Questions and bug reports go to each project, linked on its
+    card.</p></div>
+  <h3>Betas</h3>
+  <p>A card says <b>beta</b> when the version is below 1.0 or its name says beta, alpha, rc or test. A beta may change how
+    it saves your work from one release to the next.</p>
+  <h3>Why the hub mirrors the files</h3>
+  <p>A browser is not allowed to download a release file from GitHub directly. So the hub keeps a copy of each package, and a
+    copy of its source code next to it. The firmwares are open source under the GPL-3.0, which allows passing them on
+    unchanged with their source.</p>
+</section>
+
+<section id="data">
+  <h2>Your projects, presets and samples</h2><p class="who">For everyone</p>
+  <p>All firmwares keep what you make in the same flash memory of the FM-1, and each in its own way. After a switch, the new
+    firmware may not read what the old one saved. It may start empty, or it may overwrite parts of it.</p>
+  <ol>
+    <li><b>Back up first.</b> Use the backup of the firmware you are on. Each project's page says how.</li>
+    <li><b>Then switch.</b> Firmwares from the same family, such as Felucca and its forks, often read each other's projects.
+      Others do not.</li>
+    <li><b>Coming back</b> to a firmware does not always bring your old work back. Restore it from your backup.</li>
+  </ol>
+</section>
+
+<section id="back">
+  <h2>Back to the official firmware</h2><p class="who">For everyone</p>
+  <p>Download <b>FM-1 V15</b> from <a href="https://www.m-vave.com/download" target="_blank" rel="noopener">m-vave.com/download</a>
+    (PC Firmware, FM-1) and choose the file in the <a href="https://fm1.designburgapps.com/#official">Official firmware</a> box
+    on the hub. Only that exact file is accepted.</p>
+  <h3>The USB rescue</h3>
+  <p>If the FM-1 does not start any more, hold <b>OCT−</b> while you switch it on. It then waits for an update over USB.
+    Connect it and install any firmware, or V15, from the hub.</p>
+</section>
+
+<section id="listed">
+  <h2>Getting your firmware listed</h2><p class="who">For authors</p>
+  <p>The hub lists a firmware when all of this is true:</p>
+  <ul>
+    <li><b>It makes music.</b> Synths, grooveboxes, drum machines, samplers, chord instruments, controllers. Games and tools
+      without sound are not listed.</li>
+    <li><b>It is open source</b>, with its source code public in the repository and a license that allows passing it on,
+      such as the GPL-3.0.</li>
+    <li><b>It has a .fwsc on a GitHub release.</b> The hub checks the releases on its own several times a day, so every new
+      release appears without anyone doing anything. A project without releases can name its package in a web installer
+      instead. If your release has more than one .fwsc, tell us which one is the firmware.</li>
+    <li><b>The package has an update loader</b> and an identity starting with <code>FM-1_</code>. See the
+      <a href="#identity">identity</a> section for why your own number helps.</li>
+  </ul>
+  <p>Mail <a href="mailto:sven@designburg.net?subject=FM-1%20Firmware%20Hub%3A%20my%20firmware&amp;body=Name%3A%0ARepository%3A%0AWhat%20it%20does%3A%0A">sven@designburg.net</a>
+    with the name, the repository and a sentence about what it does. A picture of its screen helps: the cards show each
+    project's real screen, taken from its repository.</p>
+  <h3>Not ready yet?</h3>
+  <p>A firmware without a release package can not be listed yet. Attach the .fwsc to a release, and it can go on the hub the
+    same day. Closed-source firmwares are not mirrored. A very popular one may get a link card that sends you to its
+    maker's own installer.</p>
+</section>
+
+<section id="ids">
+  <h2>All identities on the hub, live</h2><p class="who">For authors</p>
+  <p>Each firmware as its newest package reports itself. <span class="tag own">own</span> means no other firmware on the hub
+    uses this identity. <span class="tag shared">shared</span> means the hub cannot tell these firmwares apart on a connected
+    FM-1. <span class="tag mv">M-VAVE loader</span> marks a firmware built on the official V15.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Identity</th><th>Firmware</th><th>Version</th><th></th></tr></thead>
+    <tbody id="ids-body"><tr><td colspan="4" class="tabmsg">Loading the catalogue…</td></tr></tbody>
+  </table></div>
+  <p class="tabmsg">The official V15 reports <code>FM-1_015</code>. Please do not use it.</p>
+</section>
+</article>
+</div>
+
+<footer><div class="wrap">
+  The FM-1 Firmware Hub by <a href="https://github.com/zvenson" rel="noopener">zvenson</a>. The update path is Felucca's
+  (Leo Kuroshita, Hügelton Instruments). M-VAVE and FM-1 are trademarks of their owners; not affiliated with M-VAVE.
+  <br><a href="https://fm1.designburgapps.com/">The hub</a> · <a href="https://designburg.net/">designburg.net</a>
+  · <a href="https://zp12.designburgapps.com/impressum.html">Impressum · Datenschutz</a>
+</div></footer>
+
+<script>
+"use strict";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const day = new Date().toISOString().slice(0, 10);       // (the hub asks for catalog.json?<UTC day>: the same cache)
+fetch(`../catalog.json?${day}`).then((r) => r.json()).then((c) => {
+  const fws = c.firmwares.filter((f) => f.product);
+  const n = {};
+  fws.forEach((f) => { n[f.product] = (n[f.product] || 0) + 1; });
+  fws.sort((a, b) => a.product.localeCompare(b.product, "en", { numeric: true }) || a.name.localeCompare(b.name));
+  document.getElementById("ids-body").innerHTML = fws.map((f) => `<tr><td class="id">${esc(f.product)}</td>` +
+    `<td><a href="../#fw-${esc(f.id)}">${esc(f.name)}</a></td><td>${esc(f.version)}</td>` +
+    `<td>${n[f.product] > 1 ? '<span class="tag shared">shared</span>' : '<span class="tag own">own</span>'}` +
+    `${f.loader === "mvave" ? ' <span class="tag mv">M-VAVE loader</span>' : ""}</td></tr>`).join("");
+}).catch(() => {
+  document.getElementById("ids-body").innerHTML = '<tr><td colspan="4" class="tabmsg">The catalogue could not be loaded. Reload the page.</td></tr>';
+});
+</script>
+</body>
+</html>
