@@ -44,7 +44,7 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          what="A drum machine: eight tracks of drums, a step sequencer, Grids, a pumping compressor, LFOs, resonators and "
               "live effects. Play it in the browser first."),
     dict(id="felucca", added="2026-10-08", editor="https://hugelton.github.io/Felucca/webapp/editor/", play="https://hugelton.github.io/Felucca/webapp/try/",
-         kind=["synth", "groove", "dev"], name="Felucca", author="Leo Kuroshita (Hügelton Instruments)", repo="hugelton/Felucca",
+         kind=["groove", "dev"], name="Felucca", author="Leo Kuroshita (Hügelton Instruments)", repo="hugelton/Felucca",
          ident=r"FM-1_91\d", src="github",
          what="The custom firmware the others build on: the FM-1's own synth engines, a sequencer, effects and a "
               "better panel, with an editor in the browser."),
@@ -110,7 +110,7 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          what="Felucca played from an Arturia MiniLab 3: track faders, a DJ filter, momentary effect pads; 32 patches a "
               "bank, 12 evolving songs, revoiced 808 and CR78 kits."),
     dict(id="obervave", added="2026-10-13",
-         kind=["synth", "groove"], name="OberVave", author="zvenson", repo="zvenson/obervave", ident=r"FM-1_95\d",
+         kind="synth", name="OberVave", author="zvenson", repo="zvenson/obervave", ident=r"FM-1_95\d",
          src="repo:docs/firmware",
          what="An 8-voice analog-style poly in the spirit of the classic American polys of 1979-84: two oscillators a "
               "voice, sync, cross-mod, a 12 / 24 dB filter with a SEM-style morph, an arpeggiator with hold, chorus, "
