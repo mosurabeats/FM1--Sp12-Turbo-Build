@@ -28,7 +28,8 @@ BLK, KEEP, BLOCKS = 0x30, 0x2F, 20                # (as fm1pkg.js productOf)
 
 # id, editor / play (its web editor, its version in the browser), kind (the page's filter, one or a list: synth,
 # groove, drums, chords, dev), added (the day it came on the hub, not its release), name, author, repo, the identity the running firmware reports (regex), what it is; source: "github" (the
-# latest release's .fwsc), "pages:<its web installer>" (no releases: the package its installer names) or a path in this machine's checkouts (our own, deployed from there)
+# latest release's .fwsc), "pages:<its web installer>" (no releases: the package its installer names), "repo:<dir>" (no releases: the newest
+# package committed in that directory of the repository, its tag v<version>) or a path in this machine's checkouts (our own, deployed from there)
 FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their GitHub stars)
     # (Salt, ChoralRoot, Jangada, Melodee, Hortator, GHOULBOX, Bubba, Floyd, DX7 Banks, WaveLoop report numbers the others use too: their check is any FM-1
     # identity, the update loader is checked as for all; the page names the running one only when it is unambiguous)
@@ -107,6 +108,11 @@ FIRMWARES = [  # (the page orders them: zp12, sloopDX, then the others by their 
          src="github", site="https://eli7vh.github.io/Felucca/mod/",
          what="Felucca played from an Arturia MiniLab 3: track faders, a DJ filter, momentary effect pads; 32 patches a "
               "bank, 12 evolving songs, revoiced 808 and CR78 kits."),
+    dict(id="obervave", added="2026-10-13",
+         kind="synth", name="OberVave", author="zvenson", repo="zvenson/obervave", ident=r"FM-1_95\d", src="repo:docs/firmware",
+         what="An 8-voice polyphonic analog-style synth in the spirit of the classic American polys of 1979-84: two "
+              "oscillators a voice, sync, cross-mod, a 12 / 24 dB filter with a SEM-style morph, an arpeggiator, chorus, "
+              "ping-pong delay and a plate reverb. 32 programs, dark arpeggios first."),
     dict(id="dinghy", added="2026-10-09",
          kind="dev", name="Dinghy", author="zvenson", repo="zvenson/dinghy", ident=r"FM-1_99\d", src="github",
          what="Your base for your own FM-1 firmware: everything under it done and documented (updates, USB rescue, "
@@ -215,6 +221,22 @@ def latest_pages(spec, repo):
     return raw, version, date, None, f"https://github.com/{repo}/tree/{commit if re.fullmatch(r'[0-9a-f]{7,40}', commit) else 'main'}"
 
 
+def latest_repo(spec, repo):
+    """the newest package committed in the repository (repo:<dir>; a project without releases yet): one API call for
+    the listing, one for the commit's date; the source at the tag v<version>"""
+    sub = spec.split(":", 1)[1]
+    files = json.loads(get(f"https://api.github.com/repos/{repo}/contents/{sub}"))
+    vkey = lambda f: [int(n) for n in re.findall(r"\d+", f["name"])]
+    pkgs = sorted((f for f in files if f["name"].endswith(".fwsc")), key=vkey)
+    if not pkgs:
+        raise ValueError(f"no package in {sub}")
+    pk = pkgs[-1]
+    version = re.sub(r"^[a-z0-9]+-|\.fwsc$", "", pk["name"])
+    commits = json.loads(get(f"https://api.github.com/repos/{repo}/commits?path={urllib.parse.quote(sub + '/' + pk['name'])}&per_page=1"))
+    date = commits[0]["commit"]["committer"]["date"] if commits else datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return get(pk["download_url"], "application/octet-stream"), version, date, None, f"https://github.com/{repo}/tree/v{version}"
+
+
 def latest_local(spec, sloopdx):
     where, sub = spec.split(":", 1)
     root = (Path(sloopdx) if where == "sloopdx" else HERE) / sub
@@ -238,7 +260,8 @@ def main(sloopdx=str(HERE.parent / "sloopdx"), out=OUT, purge=False):
     for f in FIRMWARES:
         try:
             raw, version, date, rel_url, src_url = latest_github(f["repo"], f.get("pkg", r"[^/\"]+\.fwsc")) if f["src"] == "github" \
-                else latest_pages(f["src"], f["repo"]) if f["src"].startswith("pages:") else latest_local(f["src"], sloopdx)
+                else latest_pages(f["src"], f["repo"]) if f["src"].startswith("pages:") \
+                else latest_repo(f["src"], f["repo"]) if f["src"].startswith("repo:") else latest_local(f["src"], sloopdx)
             ident = product_of(raw)
             if not re.fullmatch(f["ident"], ident) or b"FELUCCA-LOADER-1" not in raw:
                 raise ValueError(f"{version}: identity {ident!r} or the update loader not as expected")
