@@ -21,6 +21,15 @@
 #ifndef FELUCCA_UAC
 #define FELUCCA_UAC 0
 #endif
+/* ZP12_UAI=1 (zp12, instead of FELUCCA_UAC) adds a USB audio output the other way round (UAC1, class compliant):
+ * the host plays 16-bit stereo at 44.1 kHz into the FM-1 on an isochronous adaptive OUT endpoint (EP2, the
+ * stock firmware's choice), each packet handed to smp_usb (sp_smp.c) from usb_poll: sampling over USB. */
+#ifndef ZP12_UAI
+#define ZP12_UAI 0
+#endif
+#if ZP12_UAI && (FELUCCA_UAC || FELUCCA_CDC)
+#error "ZP12_UAI takes IF2 and EP2: not with FELUCCA_UAC or FELUCCA_CDC"
+#endif
 enum { S_FADDR = 0, S_POWER = 1, S_INTRTX1 = 2, S_INTRTX2 = 3, S_INTRRX1 = 4, S_INTRRX2 = 5, S_INTRUSB = 6,
        S_INTRTX1E = 7, S_INTRTX2E = 8, S_INTRRX1E = 9, S_INTRRX2E = 10, S_INTRUSBE = 11, S_FRAME1 = 12,
        S_FRAME2 = 13, S_INDEX = 14,
@@ -46,6 +55,23 @@ static struct {
     uint8_t rx_pend;             /* EP3 OUT packet seen, not yet taken (the ring was full) */
     uint32_t rx_pkts, tx_pkts;
 } cdc = {{0x00, 0xC2, 0x01, 0x00, 0, 0, 8}};   /* 115200 8N1 */
+#endif
+
+#if ZP12_UAI
+/* the USB audio output (sampling): adaptive, so the host keeps its own clock and sends 44 or 45 frames a
+ * packet (46 allowed). Nothing is played in time: smp_usb records what comes (and the monitor's ring
+ * absorbs the drift), so no feedback endpoint. Polled at 2 kHz: a packet is taken within 0.5 ms, before
+ * the next one comes. */
+#define UAI_AS_IF 2u
+#define UAI_RATE 44100u
+#define UAI_MAXP (46u * 4u)
+static uint8_t ep2rx[UAI_MAXP + 4u] __attribute__((aligned(4)));
+static struct {
+    uint8_t alt;                 /* 1: the host streams */
+    uint8_t e0_rx;               /* SET_CUR sampling frequency data stage pending */
+    uint32_t pkts, short_pkts;
+} uai;
+static void smp_usb(const uint8_t *p, uint32_t bytes);   /* sp_smp.c */
 #endif
 
 #if FELUCCA_UAC
@@ -137,8 +163,8 @@ static void midi_out_event(uint32_t pkt)            /* from the audio ISR */
  * bcdDevice: 3.00 MIDI, +0.01 CDC, +0.10 the audio input (hosts cache descriptors per version) */
 #define CDC_IF (2 + FELUCCA_UAC)
 #define UAC_AS_IF 2u
-#define CFG_LEN (101 + 74 * FELUCCA_CDC + 74 * FELUCCA_UAC)
-#define USB_NIF (2 + FELUCCA_UAC + 2 * FELUCCA_CDC)
+#define CFG_LEN (101 + 74 * FELUCCA_CDC + 74 * FELUCCA_UAC + 74 * ZP12_UAI)
+#define USB_NIF (2 + FELUCCA_UAC + 2 * FELUCCA_CDC + ZP12_UAI)
 #if FELUCCA_CDC
 static const uint8_t DEV_DESC[18] = {18, 1, 0x00, 0x02, 0xEF, 0x02, 0x01, 64, 0x09, 0x12, 0x01, 0x00,
                                      0x01 + 0x10 * FELUCCA_UAC, 0x03, 1, 2, 0, 1};   /* misc/IAD */
@@ -150,7 +176,7 @@ static const uint8_t CFG_DESC[] = {
 #define FELUCCA_USB_PID 0x0001   /* the update loader is 0x0002 */
 #endif
 static const uint8_t DEV_DESC[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 64, 0x09, 0x12, FELUCCA_USB_PID & 0xFF,
-                                     FELUCCA_USB_PID >> 8, 0x00 + 0x10 * FELUCCA_UAC, 0x03,
+                                     FELUCCA_USB_PID >> 8, 0x00 + 0x10 * FELUCCA_UAC + 0x20 * ZP12_UAI, 0x03,
                                      1, 2, 0, 1};
 static const uint8_t CFG_DESC[] = {
     9, 2, CFG_LEN & 0xFF, CFG_LEN >> 8, USB_NIF, 1, 0, 0x80, 50,
@@ -160,6 +186,10 @@ static const uint8_t CFG_DESC[] = {
     10, 0x24, 1, 0x00, 0x01, 31, 0, 2, 1, UAC_AS_IF,    /* AC header 1.00: MIDI + audio streaming */
     12, 0x24, 2, 1, 0x03, 0x06, 0, 2, 0x03, 0x00, 0, 0, /* input terminal 1: line, 2 ch (L R) */
     9, 0x24, 3, 2, 0x01, 0x01, 0, 1, 0,                 /* output terminal 2: USB streaming, from 1 */
+#elif ZP12_UAI
+    10, 0x24, 1, 0x00, 0x01, 31, 0, 2, 1, UAI_AS_IF,    /* AC header 1.00: MIDI + audio streaming */
+    12, 0x24, 2, 1, 0x01, 0x01, 0, 2, 0x03, 0x00, 0, 0, /* input terminal 1: USB streaming, 2 ch (L R) */
+    9, 0x24, 3, 2, 0x01, 0x03, 0, 1, 0,                 /* output terminal 2: speaker, from 1 (the sampler) */
 #else
     9, 0x24, 1, 0x00, 0x01, 9, 0, 1, 1,
 #endif
@@ -180,6 +210,15 @@ static const uint8_t CFG_DESC[] = {
     11, 0x24, 2, 1, 2, 2, 16, 1, UAC_RATE & 0xFF, (UAC_RATE >> 8) & 0xFF, UAC_RATE >> 16,
                                                         /* type I: 2 ch, 16 bit, one rate */
     9, 5, 0x84, 0x05, UAC_MAXP & 0xFF, UAC_MAXP >> 8, 1, 0, 0,   /* EP4 IN isochronous async, 1 ms */
+    7, 0x25, 1, 0x01, 0, 0, 0,                          /* CS endpoint: sampling frequency control */
+#endif
+#if ZP12_UAI
+    9, 4, UAI_AS_IF, 0, 0, 1, 2, 0, 0,                  /* IF2 audio streaming, alt 0: no bandwidth */
+    9, 4, UAI_AS_IF, 1, 1, 1, 2, 0, 0,                  /* alt 1: the stream */
+    7, 0x24, 1, 1, 1, 0x01, 0x00,                       /* AS general: terminal 1, delay 1, PCM */
+    11, 0x24, 2, 1, 2, 2, 16, 1, UAI_RATE & 0xFF, (UAI_RATE >> 8) & 0xFF, UAI_RATE >> 16,
+                                                        /* type I: 2 ch, 16 bit, one rate */
+    9, 5, 0x02, 0x09, UAI_MAXP & 0xFF, UAI_MAXP >> 8, 1, 0, 0,   /* EP2 OUT isochronous adaptive, 1 ms */
     7, 0x25, 1, 0x01, 0, 0, 0,                          /* CS endpoint: sampling frequency control */
 #endif
 #if FELUCCA_CDC
@@ -298,6 +337,17 @@ static void uac_stream(uint32_t alt)                    /* SET_INTERFACE, config
 }
 #endif
 
+#if ZP12_UAI
+static void uai_ep2_reset(void)                         /* EP2 OUT isochronous (SDK usb_g_ep_config: RxCSR 0x90, ISO) */
+{
+    fm1_usb_ep_rxbuf(2, ep2rx);
+    sie_wr(S_INDEX, 2);
+    sie_wr(S_RXMAXP, 0xFF);
+    sie_wr(S_RXCSR1, 0x90);                             /* ClrDataTog + FlushFIFO */
+    sie_wr(S_RXCSR2, 0x40);                             /* ISO */
+}
+#endif
+
 static void ep1_config(void)
 {
     fm1_usb_ep_txbuf(1, ep1tx);
@@ -337,6 +387,11 @@ static void ep1_config(void)
     uac_ep4_reset();
     fm1_usb_ep_enable(1u << 4);
     uac_stream(0);
+#endif
+#if ZP12_UAI
+    uai_ep2_reset();
+    fm1_usb_ep_enable(1u << 2);
+    uai.alt = 0;
 #endif
 }
 
@@ -392,6 +447,9 @@ static void ep0_service(void)
 #if FELUCCA_UAC
         uac.e0_rx = 0;
 #endif
+#if ZP12_UAI
+        uai.e0_rx = 0;
+#endif
         return;
     }
     if (csr & 0x10u) {                                  /* SetupEnd: the host abandoned the transfer */
@@ -402,6 +460,9 @@ static void ep0_service(void)
 #endif
 #if FELUCCA_UAC
         uac.e0_rx = 0;
+#endif
+#if ZP12_UAI
+        uai.e0_rx = 0;
 #endif
     }
     if (usb.e0_tx) {
@@ -424,6 +485,12 @@ static void ep0_service(void)
 #if FELUCCA_UAC
     if (uac.e0_rx) {                                    /* SET_CUR sampling frequency: 44100 is all we */
         uac.e0_rx = 0;                                  /* have, whatever the host asks for */
+        goto ack;
+    }
+#endif
+#if ZP12_UAI
+    if (uai.e0_rx) {                                    /* (as above: 44100 whatever is asked) */
+        uai.e0_rx = 0;
         goto ack;
     }
 #endif
@@ -460,6 +527,10 @@ static void ep0_service(void)
         if (usb.config != 1u)
             uac_stream(0);
 #endif
+#if ZP12_UAI
+        if (usb.config != 1u)
+            uai.alt = 0;
+#endif
         goto ack;
     case 0x8008:
         e0_send(&usb.config, 1, wlength);
@@ -477,6 +548,13 @@ static void ep0_service(void)
             goto ack;
         }
 #endif
+#if ZP12_UAI
+        if (s[4] == UAI_AS_IF && wvalue <= 1u && usb.config) {
+            uai_ep2_reset();
+            uai.alt = (uint8_t)wvalue;
+            goto ack;
+        }
+#endif
         if (wvalue == 0)
             goto ack;
         goto stall;
@@ -486,6 +564,12 @@ static void ep0_service(void)
             static uint8_t alt;
             alt = uac.alt;
             e0_send(&alt, 1, wlength);
+            return;
+        }
+#endif
+#if ZP12_UAI
+        if (s[4] == UAI_AS_IF) {
+            e0_send(&uai.alt, 1, wlength);
             return;
         }
 #endif
@@ -499,6 +583,10 @@ static void ep0_service(void)
 #endif
 #if FELUCCA_UAC
         if (wvalue == 0 && s[4] == 0x84u)
+            goto ack;                                   /* isochronous: no halt, no toggle */
+#endif
+#if ZP12_UAI
+        if (wvalue == 0 && s[4] == 0x02u)
             goto ack;                                   /* isochronous: no halt, no toggle */
 #endif
         if (wvalue != 0 || ep > last)
@@ -546,6 +634,27 @@ static void ep0_service(void)
     case 0xA283: {
         static const uint8_t RATE[3] = {UAC_RATE & 0xFF, (UAC_RATE >> 8) & 0xFF, UAC_RATE >> 16};
         if (s[4] != 0x84u || s[3] != 1u)
+            goto stall;
+        e0_send(RATE, 3, wlength);
+        return;
+    }
+#endif
+#if ZP12_UAI
+    case 0x2201:                                        /* SET_CUR, endpoint: sampling frequency */
+        if (s[4] != 0x02u || s[3] != 1u)
+            goto stall;
+        if (wlength) {
+            uai.e0_rx = 1;
+            sie_wr(S_INDEX, 0);
+            sie_wr(S_CSR0, 0x40);                       /* the 3 bytes follow */
+            return;
+        }
+        goto ack;
+    case 0xA281:                                        /* GET_CUR / MIN / MAX: the one rate */
+    case 0xA282:
+    case 0xA283: {
+        static const uint8_t RATE[3] = {UAI_RATE & 0xFF, (UAI_RATE >> 8) & 0xFF, UAI_RATE >> 16};
+        if (s[4] != 0x02u || s[3] != 1u)
             goto stall;
         e0_send(RATE, 3, wlength);
         return;
@@ -991,6 +1100,31 @@ static void uac_service(void)
 }
 #endif
 
+#if ZP12_UAI
+/* TIMER5, 2 kHz: a packet from the host, if one came (RxPktRdy), to the sampler; then the buffer back */
+static void uai_service(void)
+{
+    uint32_t csr, n;
+    if (!usb.up || !usb.config || !uai.alt)
+        return;
+    sie_wr(S_INDEX, 2);
+    csr = sie_rd(S_RXCSR1) | (sie_rd(S_RXCSR2) << 8);
+    if (!(csr & 1u))
+        return;
+    n = sie_rd(S_RXCOUNT1) | (sie_rd(S_RXCOUNT2) << 8);
+    if (n > UAI_MAXP)
+        n = UAI_MAXP;
+    fm1_usb_rx_sync();
+    if (n < 4u * 44u)
+        uai.short_pkts++;
+    uai.pkts++;
+    smp_usb(ep2rx, n);
+    csr = (csr & ~0x164u) | 0x10u;                      /* RxPktRdy (and OverRun / errors) cleared, as EP1 */
+    sie_wr(S_RXCSR1, csr & 0xFFu);
+    sie_wr(S_RXCSR2, csr >> 8);
+}
+#endif
+
 static void usb_poll(void)                              /* TIMER5 ISR, 2 kHz */
 {
     uint32_t iu, it, ir;
@@ -1056,6 +1190,10 @@ static void usb_poll(void)                              /* TIMER5 ISR, 2 kHz */
         uac.e0_rx = 0;
         uac_stream(0);
 #endif
+#if ZP12_UAI
+        uai.e0_rx = 0;
+        uai.alt = 0;
+#endif
         fm1_usb_ep0_buf(ep0buf);
         sie_wr(S_INTRUSBE, 0x07);
         sie_wr(S_INTRTX1E, 0x01);
@@ -1081,6 +1219,9 @@ static void usb_poll(void)                              /* TIMER5 ISR, 2 kHz */
 #endif
 #if FELUCCA_UAC
     uac_service();
+#endif
+#if ZP12_UAI
+    uai_service();
 #endif
 }
 

@@ -28,8 +28,9 @@ static volatile uint32_t fm1_ms;
 #define FELUCCA_CDC 0
 #define FELUCCA_UAC 0
 #define FELUCCA_UART 0
+#define ZP12_UAI 1                              /* a USB audio output: sampling over USB (sp_smp.c) */
 #ifndef FELUCCA_ID
-#define FELUCCA_ID "FM-1_970"                   /* package identity: 97N = zp12 build N */
+#define FELUCCA_ID "FM-1_960"                   /* package identity: 96N = this fork, build N (zp12 upstream: 97N) */
 #endif
 #include "usb.c"
 
@@ -114,6 +115,7 @@ static void ota_commit(const uint8_t *parm)
 #include "zp12_kit.h"
 #include "sp_seq.c"
 #include "sp_punch.c"
+#include "sp_smp.c"
 /* pad hits go to the audio ISR as requests (sp_seq.c sq_post): sounded, and recorded when REC */
 #define SP_HIT(k, vel, semis) sq_post(RQ_HIT, k, (vel) | (uint32_t)((semis) + 64) << 8)
 #include "sp_ui.c"
@@ -161,6 +163,7 @@ void fm1_alnk0_irq(void)                       /* via isr_alnk0 (hal/fm1_isr.S) 
             sp_render(o + 2u * b);
         }
         sp_punch(o, HALF_FRAMES);                           /* FX held + white key 1-4: roll, reverse, tape stop */
+        smp_monitor(o, HALF_FRAMES);                        /* SAMPLE page: the USB input heard */
         for (i = 0; i < HALF_WORDS; i++) {
             o[i] = sp_out((o[i] * master_q12) >> 12) << 8;   /* (-6 dB, a soft knee: sp_core.c) */
         }
@@ -283,6 +286,13 @@ static void zp12_main(void)
         }
         if (rel & (1u << B_FX) && !ui.fx_used)
             button(B_FX);
+        if (b & (1u << B_LFO)) {                        /* LFO down: ERASE while held; tapped, the SAMPLE page */
+            ui.lfo_used = 0;
+            b &= ~(1u << B_LFO);
+        }
+        if (rel & (1u << B_LFO) && !ui.lfo_used)
+            button(B_LFO);
+        ui_smp_service();                               /* a take done: onto its pad */
         if (b & (1u << B_GLO)) {                        /* GLO down: mute / solo on the white keys while held; tapped, the GLO pages */
             ui.glo_used = 0;
             b &= ~(1u << B_GLO);
@@ -376,7 +386,8 @@ static void zp12_main(void)
             ui_say("FACTORY RESET");
         }
         {   /* saving: SAVE, or by itself when stopped, silent and nothing changed for 3 s (an erase stops the audio) */
-            uint32_t k, quiet = !sq.playing && !zl_busy();   /* (not while a backup is read or restored) */
+            uint32_t k, quiet = !sq.playing && !zl_busy() && !ui_sampling();   /* (not while a backup is read or
+                                                          * restored, nor while sampling: an erase stops the USB too) */
             for (k = 0; k < SP_NCH; k++) quiet &= !sp_ch[k].on;
             if (fm1_ms - t_sig >= 500u) {
                 uint32_t sg = zs_sig();

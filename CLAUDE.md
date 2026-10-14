@@ -1,3 +1,10 @@
+# zp12 fork: FM-1 -> SP-12 Turbo (mosurabeats/FM1--Sp12-Turbo-Build)
+
+This repo forks zp12 to build an SP-12 Turbo-style OS with sampling over USB on the device. Status, decisions,
+device test steps and the roadmap: BUILDLOG.md. Fork-specific: identity FM-1_96N (tools/build.py), `ZP12_UAI`
+in usb.c (USB audio OUT on EP2, IF2), sp_smp.c (the sampler), the SAMPLE page (LFO tapped) in sp_ui.c,
+tests/sp_smp_test.c, tests/usb_desc_check.py, test packages in release/. Upstream notes follow.
+
 # zp12
 
 A second firmware for the M-VAVE FM-1: a 12-bit sampler drum machine in the spirit of the SP-12 / SP-1200, built on

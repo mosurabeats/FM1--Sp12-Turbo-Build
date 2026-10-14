@@ -23,8 +23,10 @@
 #define P_PAD RGB(18, 18, 20)
 #define P_RULE RGB(120, 140, 180)
 #define P_STEP RGB(240, 200, 60)
-static const uint16_t FAM_COL[5] = {RGB(38, 62, 112), RGB(236, 166, 44), RGB(52, 176, 160), RGB(200, 46, 50), RGB(150, 156, 172)};
-static const uint16_t FAM_INK[5] = {RGB(255, 255, 255), RGB(30, 24, 10), RGB(8, 30, 28), RGB(255, 255, 255), RGB(20, 24, 34)};
+static const uint16_t FAM_COL[6] = {RGB(38, 62, 112), RGB(236, 166, 44), RGB(52, 176, 160), RGB(200, 46, 50), RGB(150, 156, 172),
+                                    RGB(226, 92, 64)};
+static const uint16_t FAM_INK[6] = {RGB(255, 255, 255), RGB(30, 24, 10), RGB(8, 30, 28), RGB(255, 255, 255), RGB(20, 24, 34),
+                                    RGB(255, 255, 255)};
 
 /* a page untouched this long: back to the faders (GLO > SETUP > BACK; 0: never) */
 static const uint8_t UI_BACK_S[5] = {6, 12, 30, 60, 0};
@@ -35,17 +37,21 @@ static const char *const UI_BACK_NAME[5] = {"6 S", "12 S", "30 S", "60 S", "OFF"
 #endif
 static const char ZP12_VERSION[] = ZP12_VER;
 
-enum { PG_HOME, PG_WAVE, PG_SOUND, PG_TRUNC, PG_OUT, PG_SFX, PG_FILT, PG_CHO, PG_DLY, PG_REV, PG_SEG, PG_SEG2, PG_SONG, PG_SETUP, PG_CLICK, PG_OUTPUT, PG_N };
+enum { PG_HOME, PG_WAVE, PG_SOUND, PG_TRUNC, PG_OUT, PG_SFX, PG_FILT, PG_CHO, PG_DLY, PG_REV, PG_SEG, PG_SEG2, PG_SONG, PG_SETUP, PG_CLICK, PG_OUTPUT,
+       PG_SMPL, PG_N };
 static const char *const PG_NAME[PG_N] = {"MIX", "WAVE", "SOUND", "TRUNC", "OUT", "SENDS", "FILTER", "CHORUS", "DELAY", "REVERB",
-                                          "LOOP", "TOOLS", "SONG", "SETUP", "CLICK", "OUTPUT"};
+                                          "LOOP", "TOOLS", "SONG", "SETUP", "CLICK", "OUTPUT", "SAMPLE"};
 /* buttons: the printed labels' matrix ids (as SLOOP's PANEL_DEFAULT); SEL is SLOOP's SCL */
 enum { B_OCTDN = 0, B_OCTUP = 1, B_FX = 2, B_SEL = 3, B_ENV = 4, B_LFO = 5, B_EDIT = 6, B_GLO = 7, B_HOME = 8,
        B_SAVE = 9, B_ARP = 10, B_SEQ = 11, B_PLAY = 12, B_REC = 13 };
 /* the page families (the button that opens them): their name, colour, pages; on a page the header says where
  * (EDIT > SOUND) and the tabs take the faders' place */
-static const char *const FAM_NAME[5] = {"MIX", "EDIT", "FX", "SEQ", "GLO"};
-static const uint8_t FAM_FIRST[5] = {PG_HOME, PG_WAVE, PG_FILT, PG_SEG, PG_SETUP}, FAM_N[5] = {1, 5, 4, 3, 3};
-static uint32_t fam_of(uint32_t pg) { return pg == PG_HOME ? 0u : pg <= PG_SFX ? 1u : pg <= PG_REV ? 2u : pg <= PG_SONG ? 3u : 4u; }
+static const char *const FAM_NAME[6] = {"MIX", "EDIT", "FX", "SEQ", "GLO", "SAMPLE"};
+static const uint8_t FAM_FIRST[6] = {PG_HOME, PG_WAVE, PG_FILT, PG_SEG, PG_SETUP, PG_SMPL}, FAM_N[6] = {1, 5, 4, 3, 3, 1};
+static uint32_t fam_of(uint32_t pg)
+{
+    return pg == PG_HOME ? 0u : pg <= PG_SFX ? 1u : pg <= PG_REV ? 2u : pg <= PG_SONG ? 3u : pg <= PG_OUTPUT ? 4u : 5u;
+}
 static const char *const DTIME_NAME[6] = {"1/4", "1/8", "1/16", "1/32", "8T", "16T"};
 static const char *const CLICK_NAME[3] = {"OFF", "REC", "ON"};
 static const char *const CIN_NAME[3] = {"OFF", "1 BAR", "2 BARS"};
@@ -69,6 +75,9 @@ static struct {
     uint8_t rec_on, rec_prev, holding;          /* REC: pressed, the state before, held into a CLEAR */
     uint8_t save_used, prev_page, fx_used;     /* SAVE held: a loop saved; the page before EDIT; FX held: a key pressed (a punch, not the pages) */
     uint8_t glo_used;                           /* GLO held: a key pressed (mute / solo, not the pages) */
+    uint8_t lfo_used;                           /* LFO held: a key pressed (ERASE, not the SAMPLE page) */
+    uint32_t smp_pkts, smp_ms, meter;           /* SAMPLE: USB audio packets seen, when last; the meter shown */
+    uint32_t clip_n, clip_ms;                   /* SAMPLE: clipped packets seen, when one last clipped */
     uint32_t rec_t0, hold_t0;
     uint8_t mix[SP_NCH];
     uint32_t arm_ms, touch_ms;
@@ -123,9 +132,20 @@ static char *num(char *p, int32_t v, uint32_t digits, int sign) { put_int(p, v, 
 #define SP_NUSER 24
 static char ui_uname[SP_NUSER][9];
 static uint8_t ui_uflags[SP_NUSER];              /* bit 0: stored for 45->33, bit 1: at double speed (an octave down) */
+typedef char smp_wave_ok[KIT_NWAVE + SP_NUSER <= SMP_WAVE ? 1 : -1];   /* (the take's slot is free) */
 static const char *wave_name(uint32_t w)
 {
+    if (w == SMP_WAVE)
+        return sp_wave[w].n ? "TAKE" : "-----";
     return w < KIT_NWAVE ? KIT_WAVE[w].name : w < KIT_NWAVE + SP_NUSER && sp_wave[w].n ? ui_uname[w - KIT_NWAVE] : "-----";
+}
+/* n samples at 27.5 kHz as seconds, "1.7" */
+static char *smp_secs(char *p, uint32_t n)
+{
+    uint32_t t = n * 10u / SMP_RATE;
+    p = num(p, (int32_t)(t / 10u), 1, 0);
+    *p++ = '.';
+    return num(p, (int32_t)(t % 10u), 1, 0);
 }
 static const char *sound_name(uint32_t k)
 {
@@ -222,6 +242,12 @@ static void page_cols(char lab[4][8], char val[4][8])
     case PG_OUTPUT:
         COL(0, "SMOOTH", cat(val[0], sp_smooth ? "ON" : "OFF"));
         break;
+    case PG_SMPL:
+        COL(0, "LEVEL", num(val[0], smp.level, 2, 1));
+        COL(1, "THRESH", smp.thresh ? (void)num(val[1], smp.thresh, 2, 0) : (void)cat(val[1], "OFF"));
+        COL(2, "MON", cat(val[2], smp.mon ? "ON" : "OFF"));
+        COL(3, "MAX", smp_secs(val[3], (uint32_t)smp.max10 * (SMP_RATE / 10u)));
+        break;
     default:
         break;
     }
@@ -268,6 +294,9 @@ static void draw_tabs(void)
     } else if (fm == 3u) {
         p = cat(p, "LOOP ");
         num(p, sq.seg + 1, sq.seg + 1u >= 10u ? 2u : 1u, 0);
+    } else if (fm == 5u) {                       /* SAMPLE: the pad it goes to */
+        p = cat(p, "USB > PAD ");
+        pad_label(p, ui.sel);
     }
     cv_text_on(224 - text_w(&FONT_S, b), 14, &FONT_S, b, C_WHITE, P_NAVY);
     for (i = 0; i < n; i++) {
@@ -289,6 +318,15 @@ static void draw_frame(void)                    /* once: the light frame */
     lcd_fill(4, 98, 232, 2, P_FRAME);
 }
 
+static int32_t smp_bar(uint32_t m)              /* a level 0..32767 as 0..212 pixels, ~6 dB a 14 pixels (log) */
+{
+    uint32_t b = 0;
+    if (!m)
+        return 0;
+    while ((m >> b) > 1u) b++;                  /* the top bit: 0..14 */
+    return (int32_t)((b * 16u + ((m << 4 >> b) & 15u)) * 212u / 240u);
+}
+
 static void draw_lcd(void)                      /* the LCD: big the state, below it the knobs' four columns */
 {
     char big[24], small[24], lab[4][8], val[4][8], *p = big;
@@ -305,6 +343,17 @@ static void draw_lcd(void)                      /* the LCD: big the state, below
         cv_rect(10, 34, (int32_t)(w < 212u ? w : 212u), 3, P_LCDINK);
     } else if (ui.msg[0] && (int32_t)(fm1_ms - ui.msg_until) < 0) {
         cat(big, ui.msg);
+    } else if (ui.page == PG_SMPL) {            /* SAMPLE: the state, the meter (THRESH marked), the take's length */
+        if (smp.state == SM_REC) {
+            p = cat(big, "REC ");
+            cat(smp_secs(p, smp.n), " S");
+        } else if (smp.state == SM_ARMED) {
+            pad_label(cat(big, "ARMED "), ui.sel);
+        } else if ((uint32_t)(fm1_ms - ui.smp_ms) > 300u) {
+            cat(big, "NO USB AUDIO");
+        } else {
+            pad_label(cat(big, "SAMPLE "), ui.sel);
+        }
     } else if (ui.steps) {                      /* the step grid: the pad, the bar of the keys */
         pad_label(p, ui.sel);
         p = cat(p + 2, " BAR ");
@@ -350,7 +399,16 @@ static void draw_lcd(void)                      /* the LCD: big the state, below
         if (222 - text_w(&FONT_S, pg) >= bw)
             cv_text_on(222 - text_w(&FONT_S, pg), 20, &FONT_S, pg, P_LCDDIM, P_LCD);
     }
+    if (ui.page == PG_SMPL && !ui.holding) {
+        int32_t w = smp_bar(ui.meter), t = smp_bar((uint32_t)smp.thr);
+        cv_rect(10, 35, 212, 3, P_LCDDIM);     /* the meter under the big line, THRESH a tick across it */
+        cv_rect(10, 35, w, 3, (uint32_t)(fm1_ms - ui.clip_ms) < 600u ? P_RED : P_LCDINK);   /* (red: it clipped) */
+        if (smp.thresh)
+            cv_rect(10 + t, 34, 2, 5, P_LCDINK);
+    }
     cv_rect(6, 40, 220, 1, P_LCDDIM);
+    if (ui.page == PG_SMPL && smp.state == SM_REC)   /* recording: the rule fills as the take grows to MAX */
+        cv_rect(6, 39, (int32_t)(smp.n * 220u / (smp.maxn ? smp.maxn : 1u)), 2, P_LCDINK);
     page_cols(lab, val);
     for (i = 0; i < 4u; i++) {
         int32_t x = 8 + (int32_t)i * 56;
@@ -487,8 +545,9 @@ static void ui_draw(void)
     uint32_t i, s, lit = 0, on = 0, bank = ui.sel / 8u;
     ui_note_played();
     sq.turn = sq.recording && (uint32_t)(fm1_ms - ui.turn_ms) < 600u ? 1u << ui.turn_pad : 0u;
-    if (ui.page != PG_HOME && UI_BACK_S[ui.back % 5u] && (uint32_t)(fm1_ms - ui.touch_ms) > UI_BACK_S[ui.back % 5u] * 1000u && !ui.steps)
-        ui.page = PG_HOME;                      /* untouched: the knobs are the faders again */
+    if (ui.page != PG_HOME && ui.page != PG_SMPL && UI_BACK_S[ui.back % 5u] &&
+        (uint32_t)(fm1_ms - ui.touch_ms) > UI_BACK_S[ui.back % 5u] * 1000u && !ui.steps)
+        ui.page = PG_HOME;                      /* untouched: the knobs are the faders again (SAMPLE stays) */
     if (ui.arm && (uint32_t)(fm1_ms - ui.arm_ms) > 1500u)
         ui.arm = 0;
     if (ui.force) {
@@ -510,6 +569,12 @@ static void ui_draw(void)
         s = sig_of(ui.msg, sizeof ui.msg, s ^ 0x55u);
     if (ui.holding)
         s ^= ((fm1_ms - ui.hold_t0) / 40u + 1u) * 0x9E3779B1u;
+    if (ui.page == PG_SMPL) {                   /* SAMPLE: the meter, the state, the take growing, the knobs */
+        ui.meter = smp_meter();
+        s ^= ((uint32_t)smp_bar(ui.meter) + 1u) * 0x85EBCA6Bu ^ smp.state * 0x27D4EB2Fu ^ (smp.n / 275u + 1u) * 0x165667B1u;
+        s ^= ((uint32_t)(fm1_ms - ui.smp_ms) > 300u) * 0xC2B2AE35u ^ ((uint32_t)(fm1_ms - ui.clip_ms) < 600u) * 0x61C88647u;
+        s ^= (uint32_t)(smp.level + 16) * 131u ^ smp.thresh * 8191u ^ smp.mon * 524287u ^ smp.max10 * 3571u;
+    }
     if (s != ui.sig_lcd || ui.force) { ui.sig_lcd = s; draw_lcd(); }
     if (ui.steps) {
         const sq_seg_t *g = &sq_seg[sq.seg % SQ_NSEG];
@@ -648,6 +713,7 @@ static void key_down(uint32_t k, int erase)
     if (pad == 0xFFu)
         return;
     if (erase) {
+        ui.lfo_used = 1;
         ui.sel = (uint8_t)pad;
         if (!sq.playing) {
             sq_post(RQ_WIPE, pad, 0);
@@ -683,9 +749,9 @@ static void wave_set(uint32_t pad, uint32_t w)
     sp_sound_t *s = &sp_sound[pad % SP_NSOUND];
     char m[24];
     uint32_t was = s->wave >= KIT_NWAVE && s->wave < KIT_NWAVE + SP_NUSER ? ui_uflags[s->wave - KIT_NWAVE] : 0u;
-    uint32_t now = w >= KIT_NWAVE ? ui_uflags[w - KIT_NWAVE] : 0u;
+    uint32_t now = w >= KIT_NWAVE && w < KIT_NWAVE + SP_NUSER ? ui_uflags[w - KIT_NWAVE] : 0u;
     s->wave = (uint8_t)w;
-    if (w >= KIT_NWAVE)                          /* an own sample: 45->33 as it was stored */
+    if (w >= KIT_NWAVE && w < KIT_NWAVE + SP_NUSER)   /* an own sample: 45->33 as it was stored */
         s->flags = (uint8_t)((now & 1u) ? s->flags | SPF_33 : s->flags & ~SPF_33);
     if ((now ^ was) & 2u)                        /* stored at double speed: played an octave down (and back) */
         s->tune = (now & 2u) ? -12 : 0;
@@ -834,12 +900,26 @@ static void knob(uint32_t n, int32_t d)
     case PG_OUTPUT:
         if (n == 0u) sp_smooth = one > 0;         /* (right: on, left: off) */
         break;
+    case PG_SMPL:
+        if (n == 0u) smp_set_level(smp.level + one);
+        if (n == 1u) smp_set_thresh(smp.thresh + d);
+        if (n == 2u) smp.mon = one > 0;
+        if (n == 3u) smp.max10 = (uint8_t)sp_clamp(smp.max10 + one, 1, (int32_t)(SMP_MAXN * 10u / SMP_RATE));
+        break;
     default:
         break;
     }
 }
 
-static void page(uint32_t p) { ui.page = (uint8_t)p; ui.touch_ms = fm1_ms; ui.arm = 0; }
+static void page(uint32_t p)
+{
+    if (ui.page == PG_SMPL && p != PG_SMPL)
+        smp_close();                             /* (an armed take dropped, one recording kept) */
+    ui.page = (uint8_t)p;
+    ui.touch_ms = fm1_ms;
+    ui.arm = 0;
+    smp.active = p == PG_SMPL;
+}
 
 static void tap_tempo(void)                      /* ENV: the tempo of the last taps (two at least, < 2 s apart) */
 {
@@ -890,6 +970,7 @@ static void button(uint32_t b)
     case B_SAVE: ui.save_req = 1; ui_say("SAVED"); break;
     case B_GLO: page(ui.page >= PG_SETUP && ui.page < PG_OUTPUT ? ui.page + 1u : PG_SETUP); break;
     case B_ENV: tap_tempo(); break;
+    case B_LFO: page(ui.page == PG_SMPL ? PG_HOME : PG_SMPL); break;   /* tapped: SAMPLE (again: back) */
     case B_PLAY: sq_post(sq.playing ? RQ_STOP : RQ_PLAY, 0, 0); break;
     case B_REC: sq_post(RQ_REC, 0, 0); break;
     default: break;
@@ -903,6 +984,11 @@ static void button(uint32_t b)
 static uint32_t ui_holds(uint32_t held, uint32_t pressed, uint32_t released)
 {
     ui.held = held;
+    if (ui.page == PG_SMPL && (pressed & (1u << B_REC))) {   /* SAMPLE: REC arms a take for the pad (again: stop) */
+        smp_arm(ui.sel);
+        ui.touch_ms = fm1_ms;
+        pressed &= ~(1u << B_REC);
+    }
     if (pressed & (1u << B_REC)) {
         ui.rec_prev = (uint8_t)(sq.recording | sq.rec_arm << 1 | sq.dub_wait << 2);
         ui.rec_t0 = fm1_ms;
@@ -951,7 +1037,12 @@ static void ui_leds(uint32_t *btn, uint32_t *keys, uint32_t *glow)
     if (sq.playing && blink) b |= 1u << B_ENV;   /* (the beat: TAP's guide) */
     if (sq.song_mode) b |= 1u << B_SAVE;
     fam = ui.page;
-    b |= 1u << (fam == PG_HOME ? B_HOME : fam <= PG_SFX ? B_EDIT : fam <= PG_REV ? B_FX : fam <= PG_SONG ? B_SEQ : B_GLO);
+    b |= 1u << (fam == PG_HOME ? B_HOME : fam <= PG_SFX ? B_EDIT : fam <= PG_REV ? B_FX : fam <= PG_SONG ? B_SEQ :
+                fam <= PG_OUTPUT ? B_GLO : B_LFO);
+    if (fam == PG_SMPL) {                        /* SAMPLE: REC lit recording, blinking armed */
+        b &= ~(1u << B_REC);
+        if (smp.state == SM_REC || (smp.state == SM_ARMED && (fm1_ms / 250u) & 1u)) b |= 1u << B_REC;
+    }
     if ((ui.held >> B_FX) & 1u)                  /* FX held: OCT- / OCT+ lit while REV / ECHO THROW */
         b |= (uint32_t)(sp_thr_req & 1u) << B_OCTDN | (uint32_t)(sp_thr_req >> 1 & 1u) << B_OCTUP;
     else
@@ -1083,6 +1174,23 @@ static void ui_splash(uint32_t t)
     cv_blit(0, 182);
     lcd_sync();
 }
+
+/* the main loop, each pass: a take done goes onto its pad (heard at once); USB audio seen or not */
+static void ui_smp_service(void)
+{
+    uint32_t w = smp_take();
+    if (smp.pkts != ui.smp_pkts) { ui.smp_pkts = smp.pkts; ui.smp_ms = fm1_ms; }
+    if (smp.clip != ui.clip_n) { ui.clip_n = smp.clip; ui.clip_ms = fm1_ms; }
+    if (w != 0xFFu) {
+        char m[24], *p;
+        wave_set(smp.pad, w);
+        p = cat(m, "TAKE ");
+        cat(smp_secs(p, sp_wave[w].n), " S");
+        ui_say(m);
+    }
+}
+
+static int ui_sampling(void) { return ui.page == PG_SMPL || smp.state != SM_IDLE; }   /* (no autosave meanwhile) */
 
 static void ui_init(void)
 {

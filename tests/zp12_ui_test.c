@@ -26,6 +26,7 @@ static void lcd_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t c)
 #include "sp_fx.c"
 #include "zp12_kit.h"
 #include "sp_seq.c"
+#include "sp_smp.c"
 #include "sp_ui.c"
 static const char *dir;
 static void ppm(const char *name)
@@ -161,6 +162,38 @@ int main(int argc, char **argv)
     sp_mute = sp_solo = 0;
     ui.sel = 4; page(PG_OUT); i = sp_sound[4].cut; knob(2, 3); fm1_ms += 20; ui_draw(); ppm("zp12-out");   /* (pad 5: channel 5, 2.1) */
     if (sp_sound[4].cut != i || strcmp(ui.msg, "FILTER: PADS 1-2")) { printf("zp12 ui: CUT on CH5 not refused FAIL\n"); return 1; }
+    {   /* SAMPLE: LFO tapped opens it; no USB audio said; the meter; REC arms for the pad, the threshold starts it,
+         * REC again stops it, the take lands on the pad; the page stays open untouched; LFO again closes it */
+        static uint8_t pk[45 * 4];
+        uint32_t m, q;
+        sp_mute = sp_solo = 0; ui.back = 1; page(PG_HOME); ui.pair = 0; key_down(4, 0);   /* pad A3 */
+        button(B_LFO);
+        if (ui.page != PG_SMPL || !smp.active) { printf("zp12 ui: LFO did not open SAMPLE FAIL\n"); return 1; }
+        fm1_ms += 2000; ui_smp_service(); ui_draw(); ppm("zp12-sample-nousb");
+        for (q = 0; q < 45u; q++) {                     /* a -12 dB 1 kHz-ish square: the meter */
+            int16_t v = (q / 22u) & 1u ? 8000 : -8000;
+            pk[4 * q] = (uint8_t)v; pk[4 * q + 1] = (uint8_t)((uint16_t)v >> 8); pk[4 * q + 2] = pk[4 * q]; pk[4 * q + 3] = pk[4 * q + 1];
+        }
+        for (m = 0; m < 20u; m++) smp_usb(pk, sizeof pk);
+        knob(1, 12); knob(0, 3);                        /* THRESH 12, LEVEL +3 */
+        fm1_ms += 20; ui_smp_service(); ui_draw(); ppm("zp12-sample");
+        ui_holds(1u << B_REC, 1u << B_REC, 0); ui_holds(0, 0, 1u << B_REC);
+        if (smp.state != SM_ARMED || sq.rec_arm) { printf("zp12 ui: REC on SAMPLE did not arm the take (or armed the loop) FAIL\n"); return 1; }
+        { uint32_t l; fm1_ms = (fm1_ms | 250u); ui_leds(&l, &q, &q); if (!((l >> B_LFO) & 1u)) { printf("zp12 ui: LFO not lit on SAMPLE FAIL\n"); return 1; } }
+        memset(pk, 0, sizeof pk); smp_usb(pk, sizeof pk);
+        fm1_ms += 20; ui_smp_service(); ui_draw(); ppm("zp12-sample-armed");
+        for (q = 0; q < 45u; q++) { int16_t v = (q / 22u) & 1u ? 20000 : -20000; pk[4 * q] = (uint8_t)v; pk[4 * q + 1] = (uint8_t)((uint16_t)v >> 8); pk[4 * q + 2] = pk[4 * q]; pk[4 * q + 3] = pk[4 * q + 1]; }
+        for (m = 0; m < 700u; m++) smp_usb(pk, sizeof pk);
+        fm1_ms += 20; ui_smp_service(); ui_draw(); ppm("zp12-sample-rec");
+        if (smp.state != SM_REC) { printf("zp12 ui: the threshold did not start the take FAIL\n"); return 1; }
+        ui_holds(1u << B_REC, 1u << B_REC, 0); ui_holds(0, 0, 1u << B_REC);
+        fm1_ms += 20; ui_smp_service(); ui_draw(); ppm("zp12-sample-take");
+        if (sp_sound[2].wave != SMP_WAVE || strcmp(sound_name(2), "TAKE") || !sp_wave[SMP_WAVE].n) { printf("zp12 ui: the take is not on pad A3 FAIL\n"); return 1; }
+        fm1_ms += 120000; ui_draw();
+        if (ui.page != PG_SMPL) { printf("zp12 ui: SAMPLE went back by itself FAIL\n"); return 1; }
+        button(B_LFO);
+        if (ui.page != PG_HOME || smp.active) { printf("zp12 ui: LFO again did not close SAMPLE FAIL\n"); return 1; }
+    }
     printf("zp12 ui: screens written to %s\n", dir);
     return 0;
 }
